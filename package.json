@@ -1,0 +1,31 @@
+{
+  "name": "swu-singles-nz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+
+  "scripts": {
+    "app:dev": "vite --host 0.0.0.0",
+    "app:typecheck": "vue-tsc -p tsconfig.app.json --noEmit",
+    "app:build": "npm run app:typecheck && vite build",
+    "app:preview": "vite preview --host 0.0.0.0",
+    "build": "npm run app:build && npm run worker:typecheck",
+    "worker:typecheck": "tsc -p tsconfig.worker.json --noEmit",
+    "worker:dev": "wrangler dev src/worker/index.ts",
+    "worker:deploy": "wrangler deploy src/worker/index.ts",
+    "db:migrations": "wrangler d1 migrations apply swu-singles-nz"
+  },
+  
+  "dependencies": {
+    "@vitejs/plugin-vue": "latest",
+    "vite": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "latest",
+    "vue-tsc": "latest",
+    "wrangler": "latest"
+  }
+}
