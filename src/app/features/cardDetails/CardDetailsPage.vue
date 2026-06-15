@@ -77,13 +77,16 @@ watch(() => props.cardId, loadCard);
 
 .image-frame {
   aspect-ratio: 1;
-  padding: 5px;
+  box-sizing: border-box;
+  padding: 10px;
   display: grid;
+  flex: 0 0 420px;
   overflow: hidden;
   place-items: center;
 }
 
 .image-frame img {
+  display: block;
   max-height: 100%;
   max-width: 100%;
   object-fit: contain;
@@ -128,7 +131,8 @@ h1 {
   }
 
   .image-frame {
-    max-width: 520px;
+    flex-basis: auto;
+    max-width: 410px;
     width: 100%;
   }
 
