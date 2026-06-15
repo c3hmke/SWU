@@ -43,9 +43,9 @@ watch(() => props.cardId, loadCard);
       </div>
 
       <div class="card-summary">
+        <p class="card-id">{{ card.id }}</p>
         <p class="eyebrow">{{ card.setName || card.setCode }} {{ formatCollectorNumber(card.collectorNumber) }}</p>
         <h1>{{ card.name }}</h1>
-        <p class="muted">{{ card.id }}</p>
       </div>
     </section>
 
@@ -56,36 +56,37 @@ watch(() => props.cardId, loadCard);
 <style scoped>
 .card-page {
   display: grid;
-  gap: 28px;
+  gap: 8px;
   margin: 0 auto;
-  max-width: 1120px;
+  max-width: 1040px;
 }
 
 .hero-card {
-  align-items: stretch;
-  display: grid;
-  gap: 28px;
-  grid-template-columns: minmax(220px, 320px) 1fr;
+  display: flex;
+  flex-flow: row;
+  align-items: start;
+  gap: 8px;
 }
 
 .image-frame,
 .card-summary {
   background: rgba(15, 23, 42, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  border-radius: 8px;
 }
 
 .image-frame {
+  aspect-ratio: 1;
+  padding: 5px;
   display: grid;
-  min-height: 420px;
   overflow: hidden;
   place-items: center;
 }
 
 .image-frame img {
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .image-placeholder {
@@ -93,7 +94,17 @@ watch(() => props.cardId, loadCard);
 }
 
 .card-summary {
-  padding: clamp(24px, 5vw, 44px);
+  align-self: start;
+  border-radius: 8px;
+  flex: 1 1 0;
+  padding: 18px 20px;
+}
+
+.card-id {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin: 0 0 0px;
 }
 
 .eyebrow {
@@ -106,18 +117,23 @@ watch(() => props.cardId, loadCard);
 }
 
 h1 {
-  font-size: clamp(2rem, 5vw, 4.5rem);
-  line-height: 0.95;
-  margin: 0 0 18px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  line-height: 1.12;
+  margin: 0 0 10px;
 }
 
 @media (max-width: 800px) {
   .hero-card {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .image-frame {
-    max-width: 340px;
+    max-width: 520px;
+    width: 100%;
+  }
+
+  .card-summary {
+    width: 100%;
   }
 }
 </style>

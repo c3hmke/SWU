@@ -48,7 +48,7 @@ const formatSeenAt = (seenAt: string) =>
 .listings-panel {
   background: rgba(15, 23, 42, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  border-radius: 8px;
   padding: 24px;
 }
 
