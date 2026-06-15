@@ -13,7 +13,9 @@
     "worker:typecheck": "tsc -p tsconfig.worker.json --noEmit",
     "worker:dev": "wrangler dev src/worker/index.ts",
     "worker:deploy": "wrangler deploy src/worker/index.ts",
-    "db:migrations": "wrangler d1 migrations apply swu-singles-nz"
+    "db:migrations": "wrangler d1 migrations apply swu-singles-nz",
+    "cards:import": "node scripts/import-card-set.mjs",
+    "cards:import:official": "node scripts/import-card-set.mjs --official"
   },
   
   "dependencies": {

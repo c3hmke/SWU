@@ -4,8 +4,8 @@
 -- Star Wars: Unlimited sets used to group card printings and display set-level metadata.
 create table sets (
   code text primary key,                                -- Unique set code, e.g. "SOR" for "Spark of Rebellion"         
+  swu_id integer not null unique,                       -- Official SWU expansion id from admin.starwarsunlimited.com
   name text not null,                                   -- Set name, e.g. "Spark of Rebellion"    
-  release_date text not null,                           -- Release date, e.g. "2024-09-01"
   total_cards integer not null,                         -- Total number of cards in the set, e.g. 100
 
   created_at text not null default CURRENT_TIMESTAMP,
