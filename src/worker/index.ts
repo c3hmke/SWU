@@ -1,6 +1,7 @@
 import type { WorkerEnv } from './env';
 import { createJsonResponse } from './shared/http/createJsonResponse';
-import { cardRoutes } from './features/cards/presentation/cardsRoutes';
+import { cardRoutes } from './features/cards/api/cardsRoutes';
+import { sellerSyncRoutes } from './features/sellerSync/api/sellerSyncRoutes';
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
@@ -8,6 +9,10 @@ export default {
 
     if (url.pathname.startsWith('/api/cards/')) {
       return cardRoutes(request, env);
+    }
+
+    if (url.pathname.startsWith('/api/sync/')) {
+      return sellerSyncRoutes(request, env);
     }
 
     if (url.pathname === '/api/health') {
