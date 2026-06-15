@@ -7,7 +7,7 @@ export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith('/api/cards/')) {
+    if (url.pathname === '/api/cards' || url.pathname.startsWith('/api/cards/')) {
       return cardRoutes(request, env);
     }
 

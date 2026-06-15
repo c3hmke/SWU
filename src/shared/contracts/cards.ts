@@ -8,6 +8,12 @@ export type CardDetailsDto = {
   listings: CardListingDto[];
 };
 
+export type CardListItemDto = {
+  id: string;
+  name: string;
+  lowestPriceNzd: number;
+};
+
 export type CardListingDto = {
   id: string;
   sellerId: string;
