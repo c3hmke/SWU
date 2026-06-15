@@ -6,5 +6,5 @@ export type MatchedListing = ExternalListing & {
 
 export interface ListingWriter {
   upsertMatched(sellerId: string, listings: MatchedListing[], seenAt: string): Promise<number>;
-  markMissingAsUnavailable(sellerId: string, seenExternalIds: string[]): Promise<number>;
+  markMissingAsUnavailable(sellerId: string, seenAt: string): Promise<number>;
 }

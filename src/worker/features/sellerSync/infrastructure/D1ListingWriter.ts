@@ -39,19 +39,10 @@ export class D1ListingWriter implements ListingWriter {
     return listings.length;
   }
 
-  async markMissingAsUnavailable(sellerId: string, seenExternalIds: string[]): Promise<number> {
-    if (seenExternalIds.length === 0) {
-      const result = await this.db
-        .prepare('update listings set quantity = 0 where seller_id = ?1 and quantity > 0')
-        .bind(sellerId)
-        .run();
-      return result.meta.changes ?? 0;
-    }
-
-    const placeholders = seenExternalIds.map((_, index) => `?${index + 2}`).join(', ');
+  async markMissingAsUnavailable(sellerId: string, seenAt: string): Promise<number> {
     const result = await this.db
-      .prepare(`update listings set quantity = 0 where seller_id = ?1 and quantity > 0 and external_id not in (${placeholders})`)
-      .bind(sellerId, ...seenExternalIds)
+      .prepare('update listings set quantity = 0 where seller_id = ?1 and quantity > 0 and last_seen_at <> ?2')
+      .bind(sellerId, seenAt)
       .run();
 
     return result.meta.changes ?? 0;

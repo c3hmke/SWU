@@ -58,10 +58,7 @@ export class SyncSellerHandler {
       const seenAt = new Date().toISOString();
       const listingsUpdated = await this.listings.upsertMatched(seller.id, matched, seenAt);
       const unmatchedUpdated = await this.unmatchedListings.upsertMany(seller.id, unmatched, seenAt);
-      const listingsMarkedUnavailable = await this.listings.markMissingAsUnavailable(
-        seller.id,
-        externalListings.map(listing => listing.externalId)
-      );
+      const listingsMarkedUnavailable = await this.listings.markMissingAsUnavailable(seller.id, seenAt);
 
       const result = {
         syncRunId,
