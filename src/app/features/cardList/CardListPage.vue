@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { CardListItemDto } from '../../../shared/contracts/cards';
 import { listCards } from './useCardList';
 
+const route = useRoute();
+const router = useRouter();
 const cards = ref<CardListItemDto[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
-const nameFilter = ref('');
+const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const formatPrice = (price: number) =>
@@ -32,8 +35,22 @@ watch(nameFilter, () => {
     clearTimeout(searchTimeout);
   }
 
-  searchTimeout = setTimeout(loadCards, 200);
+  searchTimeout = setTimeout(() => {
+    const trimmedName = nameFilter.value.trim();
+    void router.replace({
+      query: {
+        ...route.query,
+        name: trimmedName || undefined
+      }
+    });
+
+    void loadCards();
+  }, 200);
 });
+
+function clearSearch() {
+  nameFilter.value = '';
+}
 </script>
 
 <template>
@@ -45,7 +62,10 @@ watch(nameFilter, () => {
 
     <label class="search-field">
       <span>Card name</span>
-      <input v-model="nameFilter" type="search" placeholder="Search by name, e.g. Luke" />
+      <div class="search-control">
+        <input v-model="nameFilter" type="search" placeholder="Search by name, e.g. Luke" />
+        <button v-if="nameFilter" type="button" @click="clearSearch">Clear</button>
+      </div>
     </label>
 
     <p v-if="isLoading" class="muted">Loading cards...</p>
@@ -92,18 +112,47 @@ watch(nameFilter, () => {
   text-transform: uppercase;
 }
 
-.search-field input {
+.search-control {
+  align-items: center;
   background: rgba(15, 23, 42, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
+  display: flex;
+}
+
+.search-control:focus-within {
+  border-color: #93c5fd;
+}
+
+.search-field input {
+  background: transparent;
+  border: 0;
   color: #f5f7fb;
+  flex: 1;
   font: inherit;
   padding: 12px 14px;
+  min-width: 0;
 }
 
 .search-field input:focus {
-  border-color: #93c5fd;
   outline: none;
+}
+
+.search-control button {
+  background: rgba(147, 197, 253, 0.12);
+  border: 0;
+  border-radius: 6px;
+  color: #93c5fd;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-right: 6px;
+  padding: 7px 10px;
+}
+
+.search-control button:hover {
+  background: rgba(147, 197, 253, 0.2);
 }
 
 .card-list {
