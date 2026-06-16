@@ -5,7 +5,7 @@ compatibility_date = "2026-06-13"
 [[d1_databases]]
 binding = "DB"
 database_name = "swu-singles-nz"
-database_id = "replace-with-cloudflare-d1-database-id"
+database_id = "39a9b2a4-365e-4d5c-89ac-84b1d8e2f2bb"
 
 [triggers]
 crons = []
