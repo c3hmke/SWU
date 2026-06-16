@@ -1,7 +1,8 @@
 import type { CardDetailsDto } from '../../../shared/contracts/cards';
+import { apiUrl } from '../../api';
 
 export async function getCardDetails(cardId: string): Promise<CardDetailsDto> {
-  const response = await fetch(`/api/cards/${encodeURIComponent(cardId)}`);
+  const response = await fetch(apiUrl(`/api/cards/${encodeURIComponent(cardId)}`));
 
   if (response.status === 404) {
     throw new Error('Card not found');

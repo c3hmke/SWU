@@ -1,4 +1,5 @@
 import type { CardListItemDto } from '../../../shared/contracts/cards';
+import { apiUrl } from '../../api';
 
 export async function listCards(filters: { name: string }): Promise<CardListItemDto[]> {
   const searchParams = new URLSearchParams();
@@ -8,7 +9,7 @@ export async function listCards(filters: { name: string }): Promise<CardListItem
   }
 
   const queryString = searchParams.toString();
-  const response = await fetch(`/api/cards${queryString ? `?${queryString}` : ''}`);
+  const response = await fetch(apiUrl(`/api/cards${queryString ? `?${queryString}` : ''}`));
 
   if (!response.ok) {
     throw new Error('Unable to load cards');
