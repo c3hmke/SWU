@@ -11,6 +11,10 @@ export async function sellerSyncRoutes(request: Request, env: WorkerEnv): Promis
     return createJsonResponse({ error: 'Not found' }, 404, request);
   }
 
+  if (!isAuthorizedSyncRequest(request, env)) {
+    return createJsonResponse({ error: 'Unauthorized' }, 401, request);
+  }
+
   try {
     const result = await syncSeller(env.DB, createAdapterRegistry(), 'calico-keep');
     return createJsonResponse(result, 200, request);
@@ -22,4 +26,9 @@ export async function sellerSyncRoutes(request: Request, env: WorkerEnv): Promis
     console.error(error);
     return createJsonResponse({ error: error instanceof Error ? error.message : 'Internal server error' }, 500, request);
   }
+}
+
+function isAuthorizedSyncRequest(request: Request, env: WorkerEnv): boolean {
+  const authorization = request.headers.get('authorization');
+  return authorization === `Bearer ${env.SYNC_API_TOKEN}`;
 }
