@@ -1,5 +1,9 @@
 import type { CardListItem } from './CardListItem';
 
+export type CardListSearchCriteria = {
+  name: string | null;
+};
+
 export interface CardListRepository {
-  listWithCurrentPrices(): Promise<CardListItem[]>;
+  listWithCurrentPrices(criteria: CardListSearchCriteria): Promise<CardListItem[]>;
 }

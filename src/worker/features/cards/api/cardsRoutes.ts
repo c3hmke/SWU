@@ -11,7 +11,8 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
   const url = new URL(request.url);
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const handler = new ListCardsHandler(new D1CardListRepository(env.DB));
-    const cards = await handler.execute();
+    const name = url.searchParams.get('name')?.trim() || null;
+    const cards = await handler.execute({ name });
     return createJsonResponse(cards);
   }
 
