@@ -1,7 +1,7 @@
 import type { WorkerEnv } from './env';
 import { createJsonResponse } from './shared/http/createJsonResponse';
-import { cardRoutes } from './features/cards/api/cardsRoutes';
-import { sellerSyncRoutes } from './features/sellerSync/api/sellerSyncRoutes';
+import { cardRoutes } from './features/cards/api';
+import { sellerSyncRoutes } from './features/sellerSync/api';
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {

@@ -1,4 +1,4 @@
-import type { CardSetImport } from '../../domain/CardSetImport';
+import type { CardSetImport, PreparedCardSetImport } from './model';
 
 export function validateCardSetImport(value: unknown): CardSetImport {
   if (!isRecord(value)) {
@@ -45,6 +45,24 @@ export function validateCardSetImport(value: unknown): CardSetImport {
   });
 
   return { code, swuId, name, totalCards, cards };
+}
+
+export function prepareCardSetImport(cardSet: CardSetImport): PreparedCardSetImport {
+  return {
+    setCode: cardSet.code,
+    swuId: cardSet.swuId,
+    setName: cardSet.name,
+    totalCards: cardSet.totalCards,
+    cards: cardSet.cards.map(card => ({
+      id: createCardId(cardSet.code, card.collectorNumber),
+      collectorNumber: card.collectorNumber,
+      name: card.name
+    }))
+  };
+}
+
+export function createCardId(setCode: string, collectorNumber: number): string {
+  return `${setCode}${collectorNumber.toString().padStart(3, '0')}`;
 }
 
 function readRequiredString(record: Record<string, unknown>, key: string): string {
