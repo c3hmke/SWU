@@ -1,6 +1,6 @@
 import type { ExternalListing, Seller, SellerAdapter, SyncCard } from './model';
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 200;
 const STOREPASS_STORE_ID = 'MInamaYs3W';
 const PRODUCT_LINE = 'Star Wars Unlimited';
 

@@ -4,7 +4,6 @@ import type { ExternalListing, MatchedListing, SellerAdapter, SyncSellerResult }
 import { parseListingIdentity } from './model';
 import {
   createSyncRun,
-  findSyncCardBySetNameAndCollectorNumber,
   getSellerBySlug,
   listSyncCards,
   markMissingListingsUnavailable,
@@ -35,15 +34,16 @@ export async function syncSeller(
 
   try {
     const cards = await listSyncCards(db);
+    const cardsByListingIdentity = new Map(
+      cards.map(card => [createListingIdentityKey(card.setName, card.collectorNumber), card])
+    );
     const externalListings = await adapter.fetchListings(seller, cards);
     const matched: MatchedListing[] = [];
     const unmatched: ExternalListing[] = [];
 
     for (const listing of externalListings) {
       const identity = parseListingIdentity(listing.productName);
-      const card = identity
-        ? await findSyncCardBySetNameAndCollectorNumber(db, identity.setName, identity.collectorNumber)
-        : null;
+      const card = identity ? cardsByListingIdentity.get(createListingIdentityKey(identity.setName, identity.collectorNumber)) : null;
 
       if (card) {
         matched.push({ ...listing, cardId: card.id });
@@ -87,4 +87,8 @@ export async function syncSeller(
 
     throw error;
   }
+}
+
+function createListingIdentityKey(setName: string, collectorNumber: number): string {
+  return `${setName.trim().toLowerCase()}#${collectorNumber}`;
 }

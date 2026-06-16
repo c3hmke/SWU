@@ -47,25 +47,6 @@ export async function listSyncCards(db: D1Database): Promise<SyncCard[]> {
   return result.results.map(mapSyncCard);
 }
 
-export async function findSyncCardBySetNameAndCollectorNumber(
-  db: D1Database,
-  setName: string,
-  collectorNumber: number
-): Promise<SyncCard | null> {
-  const row = await db
-    .prepare(
-      `select c.id, c.name, c.set_code, s.name as set_name, c.collector_number
-       from cards c
-       inner join sets s on s.code = c.set_code
-       where lower(s.name) = lower(?1)
-         and c.collector_number = ?2`
-    )
-    .bind(setName, collectorNumber)
-    .first<SyncCardRow>();
-
-  return row ? mapSyncCard(row) : null;
-}
-
 export async function upsertMatchedListings(
   db: D1Database,
   sellerId: string,
