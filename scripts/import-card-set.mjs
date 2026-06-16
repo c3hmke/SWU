@@ -43,7 +43,6 @@ async function fetchOfficialCardSet(setIdentifier) {
   let page = 1;
   let pageCount = 1;
   const cardsByCollectorNumber = new Map();
-  let totalCards = null;
 
   while (page <= pageCount) {
     const url = new URL('https://admin.starwarsunlimited.com/api/card-list');
@@ -67,8 +66,6 @@ async function fetchOfficialCardSet(setIdentifier) {
         continue;
       }
 
-      totalCards ??= attributes.cardCount ?? null;
-
       if (!Number.isInteger(attributes.cardNumber) || !attributes.title) {
         continue;
       }
@@ -87,7 +84,9 @@ async function fetchOfficialCardSet(setIdentifier) {
     page += 1;
   }
 
-  if (!totalCards) {
+  const totalCards = cardsByCollectorNumber.size;
+
+  if (totalCards === 0) {
     throw new Error(`No official cards found for expansion ${expansion.code} (${expansion.id}).`);
   }
 
