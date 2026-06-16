@@ -24,5 +24,9 @@ export default {
     }
 
     return createJsonResponse({ error: 'Not found' }, 404, request);
+  },
+
+  async scheduled(_controller: ScheduledController, env: WorkerEnv, _ctx: ExecutionContext): Promise<void> {
+    await syncSeller(env.DB, createAdapterRegistry(), 'calico-keep');
   }
 };
