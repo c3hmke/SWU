@@ -10,25 +10,25 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const name = url.searchParams.get('name')?.trim() || null;
     const cards = await listCardsWithCurrentPrices(env.DB, { name });
-    return createJsonResponse(cards);
+    return createJsonResponse(cards, 200, request);
   }
 
   const match = url.pathname.match(/^\/api\/cards\/([^/]+)$/);
 
   if (!match || request.method !== 'GET') {
-    return createJsonResponse({ error: 'Not found' }, 404);
+    return createJsonResponse({ error: 'Not found' }, 404, request);
   }
 
   try {
     const card = await getCardDetails(env.DB, decodeURIComponent(match[1]));
-    return createJsonResponse(card);
+    return createJsonResponse(card, 200, request);
   } catch (error) {
     if (error instanceof NotFoundError) {
-      return createJsonResponse({ error: error.message }, 404);
+      return createJsonResponse({ error: error.message }, 404, request);
     }
 
     console.error(error);
-    return createJsonResponse({ error: 'Internal server error' }, 500);
+    return createJsonResponse({ error: 'Internal server error' }, 500, request);
   }
 }
 

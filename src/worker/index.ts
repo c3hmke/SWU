@@ -1,11 +1,15 @@
 import type { WorkerEnv } from './env';
-import { createJsonResponse } from './shared/http/createJsonResponse';
+import { createJsonResponse, createOptionsResponse } from './shared/http/createJsonResponse';
 import { cardRoutes } from './features/cards/api';
 import { sellerSyncRoutes } from './features/sellerSync/api';
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return createOptionsResponse(request);
+    }
 
     if (url.pathname === '/api/cards' || url.pathname.startsWith('/api/cards/')) {
       return cardRoutes(request, env);
@@ -16,9 +20,9 @@ export default {
     }
 
     if (url.pathname === '/api/health') {
-      return createJsonResponse({ status: 'ok' });
+      return createJsonResponse({ status: 'ok' }, 200, request);
     }
 
-    return createJsonResponse({ error: 'Not found' }, 404);
+    return createJsonResponse({ error: 'Not found' }, 404, request);
   }
 };
