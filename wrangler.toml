@@ -7,6 +7,14 @@ binding = "DB"
 database_name = "swu-singles-nz"
 database_id = "39a9b2a4-365e-4d5c-89ac-84b1d8e2f2bb"
 
+[[ratelimits]]
+name = "READ_RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 120
+period = 60
+
 [observability.logs]
 enabled = true
 invocation_logs = true

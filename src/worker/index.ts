@@ -14,6 +14,11 @@ export default {
     }
 
     if (url.pathname === '/api/cards' || url.pathname.startsWith('/api/cards/')) {
+      const rateLimit = await env.READ_RATE_LIMITER.limit({ key: createReadRateLimitKey(request) });
+      if (!rateLimit.success) {
+        return createJsonResponse({ error: 'Too many requests' }, 429, request);
+      }
+
       return cardRoutes(request, env);
     }
 
@@ -32,3 +37,7 @@ export default {
     await syncSeller(env.DB, createAdapterRegistry(), 'calico-keep');
   }
 };
+
+function createReadRateLimitKey(request: Request): string {
+  return `cards:${request.headers.get('cf-connecting-ip') ?? 'unknown'}`;
+}
