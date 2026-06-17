@@ -7,10 +7,10 @@ import { listCards } from './useCardList';
 const route = useRoute();
 const router = useRouter();
 const cards = ref<CardListItemDto[]>([]);
-const visibleCards = computed(() => cards.value.slice(0, 12));
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
+const visibleCards = computed(() => (nameFilter.value.trim() ? cards.value : cards.value.slice(0, 12)));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const formatPrice = (price: number) =>
@@ -57,8 +57,8 @@ function clearSearch() {
 <template>
   <section class="card-list-page">
     <header class="list-header">
-      <h1>Chase Singles</h1>
-      <p class="muted">Available cards sorted by their highest current listed price.</p>
+      <h1>Search Singles</h1>
+      <p class="muted">Available cards sorted by their highest current minimum price.</p>
     </header>
 
     <label class="search-field">
