@@ -11,6 +11,7 @@ const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
 const visibleCards = computed(() => (nameFilter.value.trim() ? cards.value : cards.value.slice(0, 12)));
+const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'High value signals'));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const formatPrice = (price: number) =>
@@ -56,41 +57,47 @@ function clearSearch() {
 
 <template>
   <section class="card-list-page">
-    <header class="list-header">
-      <h1>Search Singles</h1>
-      <p class="muted">Available cards sorted by their highest current minimum price.</p>
-    </header>
 
-    <label class="search-field">
-      <span>Card name</span>
-      <div class="search-control">
-        <input v-model="nameFilter" type="search" placeholder="Search by name, e.g. Luke" />
-        <button v-if="nameFilter" type="button" @click="clearSearch">Clear</button>
-      </div>
-    </label>
-
-    <p v-if="isLoading" class="muted">Loading cards...</p>
-    <p v-else-if="errorMessage" class="error">{{ errorMessage }}</p>
-    <p v-else-if="cards.length === 0" class="muted">No cards currently have listings.</p>
-
-    <div v-else class="card-grid">
-      <RouterLink v-for="card in visibleCards" :key="card.id" :to="`/cards/${card.id}`" class="card-tile">
-        <div class="card-image-frame">
-          <img v-if="card.imageUrl" :src="card.imageUrl" :alt="card.name" loading="lazy" />
-          <span v-else class="card-image-placeholder">No image</span>
+    <section class="search-panel" aria-label="Card search controls">
+      <div class="panel-label">Market scanner</div>
+      <label class="search-field">
+        <span>Card name</span>
+        <div class="search-control">
+          <input v-model="nameFilter" type="search" placeholder="Search by name, e.g. Luke" />
+          <button v-if="nameFilter" type="button" @click="clearSearch">Clear</button>
         </div>
+      </label>
+    </section>
 
-        <span class="card-name">{{ card.name }}</span>
-        <strong>{{ formatPrice(card.lowestPriceNzd) }}</strong>
-      </RouterLink>
-    </div>
+    <section class="results-panel" aria-live="polite">
+      <div class="screen-header">
+        <span>{{ resultsLabel }}</span>
+        <span>{{ visibleCards.length.toString().padStart(2, '0') }} targets</span>
+      </div>
+
+      <p v-if="isLoading" class="muted screen-message">Loading cards...</p>
+      <p v-else-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
+      <p v-else-if="cards.length === 0" class="muted screen-message">No cards currently have listings.</p>
+
+      <div v-else class="card-grid">
+        <RouterLink v-for="card in visibleCards" :key="card.id" :to="`/cards/${card.id}`" class="card-tile">
+          <div class="card-image-frame">
+            <img v-if="card.imageUrl" :src="card.imageUrl" :alt="card.name" loading="lazy" />
+            <span v-else class="card-image-placeholder">No image</span>
+          </div>
+
+          <span class="card-name">{{ card.name }}</span>
+          <strong>{{ formatPrice(card.lowestPriceNzd) }}</strong>
+        </RouterLink>
+      </div>
+    </section>
   </section>
 </template>
 
 <style scoped>
 .card-list-page {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   margin: 0 auto;
   max-width: 1120px;
 }
@@ -102,32 +109,104 @@ function clearSearch() {
 
 .list-header h1 {
   font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: -0.04em;
   line-height: 1;
+}
+
+.search-panel,
+.results-panel {
+  position: relative;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.86) inset,
+    0 18px 80px rgba(0, 0, 0, 0.26),
+    0 0 42px rgba(14, 165, 233, 0.08);
+  clip-path: polygon(0 16px, 16px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+}
+
+.search-panel::before,
+.results-panel::before,
+.results-panel::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.search-panel::before,
+.results-panel::before {
+  inset: 0;
+  background:
+    linear-gradient(rgba(125, 211, 252, 0.04) 50%, transparent 50%) 0 0 / 100% 6px,
+    linear-gradient(90deg, rgba(125, 211, 252, 0.08), transparent 18%, transparent 82%, rgba(251, 191, 36, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.42;
+}
+
+.search-panel::after,
+.results-panel::after {
+  border-bottom: 2px solid rgba(251, 191, 36, 0.74);
+  border-left: 2px solid rgba(251, 191, 36, 0.74);
+  bottom: 10px;
+  content: '';
+  height: 18px;
+  left: 10px;
+  position: absolute;
+  width: 18px;
+}
+
+.search-panel {
+  background:
+    radial-gradient(circle at 8% 0, rgba(14, 165, 233, 0.2), transparent 34%),
+    linear-gradient(135deg, rgba(8, 13, 26, 0.96), rgba(15, 23, 42, 0.82));
+  display: grid;
+  gap: 12px;
+  padding: 18px clamp(16px, 3vw, 26px) 20px;
+}
+
+.panel-label,
+.screen-header {
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panel-label::before {
+  content: '//// ';
+  color: #38bdf8;
 }
 
 .search-field {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .search-field span {
-  color: #aab4c4;
+  color: #bae6fd;
   font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .search-control {
   align-items: center;
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(2, 6, 23, 0.92), rgba(8, 47, 73, 0.4)),
+    rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  border-radius: 0;
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.08) inset;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
   display: flex;
 }
 
 .search-control:focus-within {
-  border-color: #93c5fd;
+  border-color: #fbbf24;
+  box-shadow:
+    0 0 20px rgba(251, 191, 36, 0.11),
+    0 0 24px rgba(14, 165, 233, 0.14) inset;
 }
 
 .search-field input {
@@ -136,7 +215,8 @@ function clearSearch() {
   color: #f5f7fb;
   flex: 1;
   font: inherit;
-  padding: 12px 14px;
+  font-weight: 700;
+  padding: 13px 15px;
   min-width: 0;
 }
 
@@ -145,10 +225,10 @@ function clearSearch() {
 }
 
 .search-control button {
-  background: rgba(147, 197, 253, 0.12);
-  border: 0;
-  border-radius: 6px;
-  color: #93c5fd;
+  background: rgba(251, 191, 36, 0.13);
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 0;
+  color: #fde68a;
   cursor: pointer;
   font: inherit;
   font-size: 0.85rem;
@@ -158,20 +238,50 @@ function clearSearch() {
 }
 
 .search-control button:hover {
-  background: rgba(147, 197, 253, 0.2);
+  background: rgba(251, 191, 36, 0.22);
+}
+
+.results-panel {
+  background:
+    radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.78));
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 2.6vw, 28px);
+}
+
+.screen-header {
+  align-items: center;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.screen-header span:last-child {
+  color: #7dd3fc;
+}
+
+.screen-message {
+  margin: 0;
 }
 
 .card-grid {
   display: grid;
-  gap: clamp(14px, 2vw, 22px);
+  gap: clamp(14px, 1.8vw, 20px);
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 
 .card-tile {
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.88)),
+    rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 0;
+  box-shadow:
+    0 18px 60px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   display: grid;
   gap: 10px;
   padding: 10px;
@@ -183,8 +293,13 @@ function clearSearch() {
 }
 
 .card-tile:hover {
-  background: rgba(15, 23, 42, 0.86);
-  border-color: rgba(147, 197, 253, 0.42);
+  background:
+    linear-gradient(180deg, rgba(8, 47, 73, 0.56), rgba(2, 6, 23, 0.9)),
+    rgba(15, 23, 42, 0.86);
+  border-color: rgba(251, 191, 36, 0.46);
+  box-shadow:
+    0 22px 70px rgba(0, 0, 0, 0.28),
+    0 0 28px rgba(14, 165, 233, 0.12);
   transform: translateY(-2px);
 }
 
@@ -194,7 +309,10 @@ function clearSearch() {
   background:
     radial-gradient(circle at 50% 20%, rgba(148, 163, 184, 0.18), transparent 52%),
     rgba(2, 6, 23, 0.72);
-  border-radius: 12px;
+  border: 1px solid rgba(125, 211, 252, 0.12);
+  border-radius: 0;
+  box-shadow: 0 0 30px rgba(15, 23, 42, 0.7) inset;
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% 100%, 0 100%);
   display: flex;
   justify-content: center;
   overflow: hidden;
@@ -216,12 +334,14 @@ function clearSearch() {
 .card-name {
   font-size: 0.94rem;
   font-weight: 800;
+  letter-spacing: 0.01em;
   line-height: 1.2;
 }
 
 .card-tile strong {
-  color: #93c5fd;
+  color: #fbbf24;
   font-size: 0.96rem;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
