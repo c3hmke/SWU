@@ -10,6 +10,7 @@ export type Card = {
 export type CardListItem = {
   id: string;
   name: string;
+  imageUrl: string | null;
   lowestPriceNzd: number;
 };
 

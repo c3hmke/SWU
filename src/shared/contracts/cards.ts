@@ -11,6 +11,7 @@ export type CardDetailsDto = {
 export type CardListItemDto = {
   id: string;
   name: string;
+  imageUrl: string | null;
   lowestPriceNzd: number;
 };
 

@@ -2,14 +2,14 @@ import type { CardDetailsDto } from '../../../shared/contracts/cards';
 import type { WorkerEnv } from '../../env';
 import { NotFoundError } from '../../shared/errors/NotFoundError';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
-import { getCardById, listActiveListingsByCardId, listCardsWithCurrentPrices } from './queries';
+import { getCardById, listActiveListingsByCardId, listCardsByChasePrice } from './queries';
 
 export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Response> {
   const url = new URL(request.url);
 
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const name = url.searchParams.get('name')?.trim() || null;
-    const cards = await listCardsWithCurrentPrices(env.DB, { name });
+    const cards = await listCardsByChasePrice(env.DB, { name });
     return createJsonResponse(cards, 200, request);
   }
 

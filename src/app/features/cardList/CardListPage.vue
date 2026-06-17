@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { CardListItemDto } from '../../../shared/contracts/cards';
 import { listCards } from './useCardList';
@@ -7,6 +7,7 @@ import { listCards } from './useCardList';
 const route = useRoute();
 const router = useRouter();
 const cards = ref<CardListItemDto[]>([]);
+const visibleCards = computed(() => cards.value.slice(0, 12));
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
@@ -56,8 +57,8 @@ function clearSearch() {
 <template>
   <section class="card-list-page">
     <header class="list-header">
-      <h1>Available Singles</h1>
-      <p class="muted">Current lowest listed price from synced sellers.</p>
+      <h1>Chase Singles</h1>
+      <p class="muted">Available cards sorted by their highest current listed price.</p>
     </header>
 
     <label class="search-field">
@@ -72,9 +73,14 @@ function clearSearch() {
     <p v-else-if="errorMessage" class="error">{{ errorMessage }}</p>
     <p v-else-if="cards.length === 0" class="muted">No cards currently have listings.</p>
 
-    <div v-else class="card-list">
-      <RouterLink v-for="card in cards" :key="card.id" :to="`/cards/${card.id}`" class="card-row">
-        <span>{{ card.name }}</span>
+    <div v-else class="card-grid">
+      <RouterLink v-for="card in visibleCards" :key="card.id" :to="`/cards/${card.id}`" class="card-tile">
+        <div class="card-image-frame">
+          <img v-if="card.imageUrl" :src="card.imageUrl" :alt="card.name" loading="lazy" />
+          <span v-else class="card-image-placeholder">No image</span>
+        </div>
+
+        <span class="card-name">{{ card.name }}</span>
         <strong>{{ formatPrice(card.lowestPriceNzd) }}</strong>
       </RouterLink>
     </div>
@@ -86,7 +92,7 @@ function clearSearch() {
   display: grid;
   gap: 18px;
   margin: 0 auto;
-  max-width: 760px;
+  max-width: 1120px;
 }
 
 .list-header h1,
@@ -155,32 +161,73 @@ function clearSearch() {
   background: rgba(147, 197, 253, 0.2);
 }
 
-.card-list {
-  background: rgba(15, 23, 42, 0.78);
+.card-grid {
+  display: grid;
+  gap: clamp(14px, 2vw, 22px);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.card-tile {
+  background: rgba(15, 23, 42, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.card-tile:hover {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(147, 197, 253, 0.42);
+  transform: translateY(-2px);
+}
+
+.card-image-frame {
+  align-items: center;
+  aspect-ratio: 5 / 7;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(148, 163, 184, 0.18), transparent 52%),
+    rgba(2, 6, 23, 0.72);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
   overflow: hidden;
 }
 
-.card-row {
-  align-items: center;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 12px 14px;
-  text-decoration: none;
+.card-image-frame img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
-.card-row + .card-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.card-image-placeholder {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.card-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+.card-name {
+  font-size: 0.94rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
-.card-row strong {
+.card-tile strong {
   color: #93c5fd;
+  font-size: 0.96rem;
   white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

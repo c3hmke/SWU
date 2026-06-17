@@ -12,6 +12,7 @@ type CardRow = {
 type CardListRow = {
   id: string;
   name: string;
+  image_url: string | null;
   lowest_price_nzd: number;
 };
 
@@ -27,23 +28,24 @@ type ListingRow = {
   last_seen_at: string;
 };
 
-export async function listCardsWithCurrentPrices(
+export async function listCardsByChasePrice(
   db: D1Database,
   criteria: CardListSearchCriteria
 ): Promise<CardListItem[]> {
-  const query = `select c.id, c.name, min(l.price_nzd) as lowest_price_nzd
+  const query = `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
                  from cards c
                  inner join listings l on l.card_id = c.id
                  where l.quantity > 0
                    and (?1 is null or lower(c.name) like '%' || lower(?1) || '%')
-                 group by c.id, c.name
-                 order by c.name asc`;
+                 group by c.id, c.name, c.image_url
+                 order by lowest_price_nzd desc, c.name asc`;
 
   const result = await db.prepare(query).bind(criteria.name).all<CardListRow>();
 
   return result.results.map(row => ({
     id: row.id,
     name: row.name,
+    imageUrl: row.image_url,
     lowestPriceNzd: row.lowest_price_nzd
   }));
 }
