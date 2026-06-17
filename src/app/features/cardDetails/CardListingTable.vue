@@ -14,6 +14,7 @@ const formatSeenAt = (seenAt: string) =>
 
 <template>
   <section class="listings-panel">
+    <div class="panel-label">Seller telemetry</div>
     <div class="section-heading">
       <h2>Available Listings</h2>
       <p class="muted">Sorted by lowest price first.</p>
@@ -46,19 +47,73 @@ const formatSeenAt = (seenAt: string) =>
 
 <style scoped>
 .listings-panel {
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 24px;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.78));
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.86) inset,
+    0 18px 80px rgba(0, 0, 0, 0.26),
+    0 0 42px rgba(14, 165, 233, 0.08);
+  clip-path: polygon(0 16px, 16px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+  overflow: hidden;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.listings-panel::before,
+.listings-panel::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.listings-panel::before {
+  inset: 0;
+  background:
+    linear-gradient(rgba(125, 211, 252, 0.04) 50%, transparent 50%) 0 0 / 100% 6px,
+    linear-gradient(90deg, rgba(125, 211, 252, 0.08), transparent 18%, transparent 82%, rgba(251, 191, 36, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.38;
+}
+
+.listings-panel::after {
+  border-bottom: 2px solid rgba(251, 191, 36, 0.74);
+  border-left: 2px solid rgba(251, 191, 36, 0.74);
+  bottom: 10px;
+  height: 18px;
+  left: 10px;
+  width: 18px;
+}
+
+.panel-label {
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.panel-label::before {
+  content: '//// ';
+  color: #38bdf8;
 }
 
 .section-heading {
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
   margin-bottom: 18px;
+  padding-bottom: 14px;
 }
 
 h2,
 p {
   margin: 0;
+}
+
+h2 {
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  letter-spacing: -0.03em;
 }
 
 .listing-list {
@@ -68,12 +123,19 @@ p {
 
 .listing-card {
   align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(8, 47, 73, 0.32), rgba(2, 6, 23, 0.56)),
+    rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
   display: grid;
   gap: 14px;
   grid-template-columns: 1fr auto auto;
   padding: 16px;
+}
+
+.listing-card > div:first-child strong {
+  color: #f8fafc;
 }
 
 .listing-meta,
@@ -82,14 +144,26 @@ p {
   gap: 4px;
 }
 
+.listing-meta strong {
+  color: #fbbf24;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+}
+
 .listing-actions {
   justify-items: end;
 }
 
 .listing-actions a {
-  color: #93c5fd;
+  color: #7dd3fc;
   font-weight: 700;
+  letter-spacing: 0.04em;
   text-decoration: none;
+  text-transform: uppercase;
+}
+
+.listing-actions a:hover {
+  color: #fbbf24;
 }
 
 @media (max-width: 720px) {

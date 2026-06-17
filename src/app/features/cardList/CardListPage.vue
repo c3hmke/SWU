@@ -61,9 +61,8 @@ function clearSearch() {
     <section class="search-panel" aria-label="Card search controls">
       <div class="panel-label">Market scanner</div>
       <label class="search-field">
-        <span>Card name</span>
         <div class="search-control">
-          <input v-model="nameFilter" type="search" placeholder="Search by name, e.g. Luke" />
+          <input v-model="nameFilter" type="search" placeholder="Search by card name..." />
           <button v-if="nameFilter" type="button" @click="clearSearch">Clear</button>
         </div>
       </label>
@@ -97,7 +96,7 @@ function clearSearch() {
 <style scoped>
 .card-list-page {
   display: grid;
-  gap: 22px;
+  gap: 12px;
   margin: 0 auto;
   max-width: 1120px;
 }

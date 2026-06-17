@@ -73,7 +73,7 @@ a {
 
 main {
   position: relative;
-  padding: clamp(20px, 5vw, 56px);
+  padding: clamp(20px, 5vw, 28px);
 }
 
 .muted {
