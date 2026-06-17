@@ -38,14 +38,15 @@ watch(() => props.cardId, loadCard);
   <article v-else-if="card" class="card-page">
     <section class="hero-card">
       <div class="image-frame">
-        <span class="image-label">Visual record</span>
         <img v-if="card.imageUrl" :src="card.imageUrl" :alt="card.name" />
         <div v-else class="image-placeholder">No image</div>
       </div>
 
       <div class="card-summary">
-        <p class="card-id">Databank {{ card.id }}</p>
-        <p class="eyebrow">{{ card.setName || card.setCode }} {{ formatCollectorNumber(card.collectorNumber) }}</p>
+        <div>
+          <span class="card-id">Databank {{ card.id }} ::: </span>
+          <span class="eyebrow">[{{ card.setName || card.setCode }} {{ formatCollectorNumber(card.collectorNumber) }}]</span>
+        </div>
         <h1>{{ card.name }}</h1>
       </div>
     </section>
@@ -57,7 +58,7 @@ watch(() => props.cardId, loadCard);
 <style scoped>
 .card-page {
   display: grid;
-  gap: 22px;
+  gap: 12px;
   margin: 0 auto;
   max-width: 1040px;
 }
@@ -112,20 +113,9 @@ watch(() => props.cardId, loadCard);
 .image-frame {
   aspect-ratio: 1;
   box-sizing: border-box;
-  padding: 32px 14px 14px;
+  padding: 8px;
   display: grid;
   place-items: center;
-}
-
-.image-label {
-  color: #fbbf24;
-  font-size: 0.68rem;
-  font-weight: 900;
-  left: 18px;
-  letter-spacing: 0.18em;
-  position: absolute;
-  text-transform: uppercase;
-  top: 14px;
 }
 
 .image-frame img {
@@ -142,7 +132,7 @@ watch(() => props.cardId, loadCard);
 .card-summary {
   align-self: start;
   min-height: 220px;
-  padding: clamp(22px, 4vw, 36px);
+  padding: clamp(18px, 4vw, 28px);
 }
 
 .card-id {
