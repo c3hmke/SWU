@@ -58,23 +58,15 @@ watch(() => props.cardId, loadCard);
 <style scoped>
 .card-page {
   display: grid;
-  gap: 12px;
+  gap: 22px;
   margin: 0 auto;
   max-width: 1040px;
 }
 
 .hero-card {
   align-items: start;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(280px, 420px) 1fr;
-}
-
-.image-frame,
-.card-summary {
-  position: relative;
   background:
-    radial-gradient(circle at 20% 0, rgba(14, 165, 233, 0.2), transparent 34%),
+    radial-gradient(circle at 18% 0, rgba(14, 165, 233, 0.2), transparent 34%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.82));
   border: 1px solid rgba(125, 211, 252, 0.24);
   box-shadow:
@@ -82,39 +74,57 @@ watch(() => props.cardId, loadCard);
     0 18px 80px rgba(0, 0, 0, 0.26),
     0 0 42px rgba(14, 165, 233, 0.08);
   clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+  display: grid;
+  gap: clamp(18px, 3vw, 32px);
+  grid-template-columns: minmax(280px, 420px) 1fr;
   overflow: hidden;
+  padding: clamp(10px, 1.8vw, 0px) clamp(14px, 2.5vw, 24px) clamp(14px, 2.5vw, 24px);
+  position: relative;
 }
 
-.image-frame::before,
-.card-summary::before {
+.hero-card::before,
+.hero-card::after {
   content: '';
   position: absolute;
+  pointer-events: none;
+}
+
+.hero-card::before {
   inset: 0;
   background:
     linear-gradient(rgba(125, 211, 252, 0.04) 50%, transparent 50%) 0 0 / 100% 6px,
     linear-gradient(90deg, rgba(125, 211, 252, 0.08), transparent 24%, transparent 80%, rgba(251, 191, 36, 0.08));
   mix-blend-mode: screen;
   opacity: 0.36;
-  pointer-events: none;
 }
 
-.image-frame::after,
-.card-summary::after {
+.hero-card::after {
   border-bottom: 2px solid rgba(251, 191, 36, 0.74);
   border-left: 2px solid rgba(251, 191, 36, 0.74);
   bottom: 10px;
-  content: '';
   height: 18px;
   left: 10px;
-  position: absolute;
   width: 18px;
+}
+
+.image-frame,
+.card-summary {
+  position: relative;
+  z-index: 1;
 }
 
 .image-frame {
   aspect-ratio: 1;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(148, 163, 184, 0.18), transparent 52%),
+    rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.16);
   box-sizing: border-box;
-  padding: 8px;
+  box-shadow: 0 0 34px rgba(15, 23, 42, 0.76) inset;
+  clip-path: polygon(0 14px, 14px 0, 100% 0, 100% 100%, 0 100%);
   display: grid;
+  overflow: hidden;
+  padding: 8px;
   place-items: center;
 }
 
@@ -132,7 +142,7 @@ watch(() => props.cardId, loadCard);
 .card-summary {
   align-self: start;
   min-height: 220px;
-  padding: clamp(18px, 4vw, 28px);
+  padding: clamp(12px, 2vw, 18px) clamp(8px, 2vw, 18px);
 }
 
 .card-id {
