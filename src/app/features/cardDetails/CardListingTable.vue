@@ -10,6 +10,19 @@ const formatPrice = (price: number) =>
 
 const formatSeenAt = (seenAt: string) =>
   new Intl.DateTimeFormat('en-NZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(seenAt));
+
+const conditionLabels: Record<string, string> = {
+  'near mint': 'NM',
+  'light play': 'LP',
+  'moderate play': 'MP',
+  'heavy play': 'HP',
+  damaged: 'D'
+};
+
+function formatCondition(condition: string | null): string {
+  if (!condition) return 'U';
+  return conditionLabels[condition.trim().toLowerCase()] ?? condition;
+}
 </script>
 
 <template>
@@ -24,21 +37,21 @@ const formatSeenAt = (seenAt: string) =>
 
     <div v-else class="listing-list">
       <article v-for="listing in listings" :key="listing.id" class="listing-card">
-        <div>
+        <div class="seller-cell">
+          <a class="seller-link" :href="listing.productUrl" target="_blank" rel="noreferrer" :aria-label="`View ${listing.sellerName} listing`">
+            <span aria-hidden="true">↗</span>
+          </a>
           <strong>{{ listing.sellerName }}</strong>
-          <p class="muted">
-            {{ listing.condition || 'Unknown condition' }}
-          </p>
         </div>
 
-        <div class="listing-meta">
-          <strong>{{ formatPrice(listing.priceNzd) }}</strong>
-          <span class="muted">Qty {{ listing.quantity }}</span>
+        <div class="listing-stats">
+          <span class="stat-cell condition-code">{{ formatCondition(listing.condition) }}</span>
+          <span class="stat-cell">QTY {{ listing.quantity }}</span>
+          <strong class="stat-cell price-cell">{{ formatPrice(listing.priceNzd) }}</strong>
         </div>
 
         <div class="listing-actions">
           <span class="muted">Seen {{ formatSeenAt(listing.lastSeenAt) }}</span>
-          <a :href="listing.productUrl" target="_blank" rel="noreferrer">View Seller</a>
         </div>
       </article>
     </div>
@@ -153,41 +166,82 @@ h2 {
   border: 1px solid rgba(125, 211, 252, 0.18);
   clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
   display: grid;
-  gap: 14px;
-  grid-template-columns: 1fr auto auto;
-  padding: 16px;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  padding: 6px;
 }
 
-.listing-card > div:first-child strong {
+.seller-cell {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+}
+
+.seller-link {
+  align-items: center;
+  align-self: center;
+  background:
+    linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(251, 191, 36, 0.1)),
+    rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.36);
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.12) inset;
+  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+  color: #7dd3fc;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  text-decoration: none;
+  width: 28px;
+}
+
+.seller-link:hover {
+  border-color: rgba(251, 191, 36, 0.62);
+  color: #fbbf24;
+}
+
+.seller-cell strong {
   color: #f8fafc;
 }
 
-.listing-meta,
+.listing-stats,
 .listing-actions {
-  display: grid;
-  gap: 4px;
+  align-items: center;
+  display: flex;
 }
 
-.listing-meta strong {
+.listing-stats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 48px 76px 112px;
+}
+
+.stat-cell {
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 7px 8px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.condition-code {
+  color: #7dd3fc;
+}
+
+.price-cell {
   color: #fbbf24;
-  font-size: 1.05rem;
-  letter-spacing: 0.03em;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
 }
 
 .listing-actions {
   justify-items: end;
-}
-
-.listing-actions a {
-  color: #7dd3fc;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.listing-actions a:hover {
-  color: #fbbf24;
 }
 
 @media (max-width: 720px) {
@@ -202,6 +256,11 @@ h2 {
 
   .listing-card {
     grid-template-columns: 1fr;
+  }
+
+  .listing-stats {
+    grid-template-columns: 48px 76px 112px;
+    justify-content: start;
   }
 
   .listing-actions {
