@@ -63,7 +63,7 @@ function clearSearch() {
       <label class="search-field">
         <div class="search-control">
           <input v-model="nameFilter" type="search" placeholder="Search by card name..." />
-          <button v-if="nameFilter" type="button" @click="clearSearch">Clear</button>
+          <button v-if="nameFilter" type="button" @click="clearSearch">⬡</button>
         </div>
       </label>
     </section>
