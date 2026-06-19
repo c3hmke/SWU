@@ -28,6 +28,9 @@ export type CardListing = {
 };
 
 export type BulkCardListing = CardListing & {
+  externalId: string;
+  sellerAdapterKey: string;
+  sellerWebsiteUrl: string;
   cardId: string;
   cardName: string;
   cardImageUrl: string | null;

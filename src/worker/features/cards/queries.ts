@@ -30,6 +30,9 @@ type ListingRow = {
 };
 
 type BulkListingRow = ListingRow & {
+  external_id: string;
+  seller_adapter_key: string;
+  seller_website_url: string;
   card_id: string;
   card_name: string;
   card_image_url: string | null;
@@ -118,7 +121,8 @@ export async function listActiveListingsByCardIds(db: D1Database, cardIds: strin
   const placeholders = cardIds.map((_, index) => `?${index + 1}`).join(', ');
   const result = await db
     .prepare(
-      `select l.id, l.seller_id, s.name as seller_name, s.slug as seller_slug,
+      `select l.id, l.external_id, l.seller_id, s.name as seller_name, s.slug as seller_slug,
+              s.adapter_key as seller_adapter_key, s.website_url as seller_website_url,
               l.condition, l.price_nzd, l.quantity, l.product_url, l.last_seen_at,
               c.id as card_id, c.name as card_name, c.image_url as card_image_url
        from listings l
@@ -133,6 +137,9 @@ export async function listActiveListingsByCardIds(db: D1Database, cardIds: strin
 
   return result.results.map(row => ({
     ...mapListing(row),
+    externalId: row.external_id,
+    sellerAdapterKey: row.seller_adapter_key,
+    sellerWebsiteUrl: row.seller_website_url,
     cardId: row.card_id,
     cardName: row.card_name,
     cardImageUrl: row.card_image_url

@@ -1,4 +1,4 @@
-import type { ExternalListing, Seller, SellerAdapter, SyncCard } from './model';
+import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from './model';
 
 const BATCH_SIZE = 200;
 const STOREPASS_STORE_ID = 'MInamaYs3W';
@@ -62,6 +62,19 @@ export class CalicoKeepStorepassAdapter implements SellerAdapter {
 
     return listings;
   }
+
+  createCartUrl(seller: Seller, listings: SellerCartListing[]): string | null {
+    const cartItems = listings
+      .filter(listing => /^\d+$/.test(listing.externalId))
+      .map(listing => `${listing.externalId}:1`);
+
+    if (cartItems.length === 0) {
+      return null;
+    }
+
+    const origin = getCartOrigin(seller, listings[0]);
+    return `${origin}/cart/${cartItems.join(',')}`;
+  }
 }
 
 export function createAdapterRegistry(): Map<string, SellerAdapter> {
@@ -85,4 +98,16 @@ async function searchCards(cards: { name: string }[]): Promise<StorepassListResp
   }
 
   return response.json();
+}
+
+function getCartOrigin(seller: Seller, listing: SellerCartListing | undefined): string {
+  if (listing) {
+    try {
+      return new URL(listing.productUrl).origin;
+    } catch {
+      // Fall back to the seller URL below.
+    }
+  }
+
+  return new URL(seller.websiteUrl).origin;
 }

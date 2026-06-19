@@ -2,6 +2,7 @@ export type Seller = {
   id: string;
   name: string;
   slug: string;
+  websiteUrl: string;
   adapterKey: string;
   enabled: boolean;
 };
@@ -28,9 +29,16 @@ export type MatchedListing = ExternalListing & {
   cardId: string;
 };
 
+export type SellerCartListing = {
+  externalId: string;
+  productUrl: string;
+  quantity: number;
+};
+
 export type SellerAdapter = {
   key: string;
   fetchListings(seller: Seller, cards: SyncCard[]): Promise<ExternalListing[]>;
+  createCartUrl?(seller: Seller, listings: SellerCartListing[]): string | null;
 };
 
 export type SyncRunStatus = 'running' | 'succeeded' | 'failed';

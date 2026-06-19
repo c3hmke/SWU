@@ -5,6 +5,7 @@ type SellerRow = {
   id: string;
   name: string;
   slug: string;
+  website_url: string;
   adapter_key: string;
   enabled: number;
 };
@@ -19,7 +20,7 @@ type SyncCardRow = {
 
 export async function getSellerBySlug(db: D1Database, slug: string): Promise<Seller | null> {
   const row = await db
-    .prepare('select id, name, slug, adapter_key, enabled from sellers where slug = ?1')
+    .prepare('select id, name, slug, website_url, adapter_key, enabled from sellers where slug = ?1')
     .bind(slug)
     .first<SellerRow>();
 
@@ -28,6 +29,7 @@ export async function getSellerBySlug(db: D1Database, slug: string): Promise<Sel
         id: row.id,
         name: row.name,
         slug: row.slug,
+        websiteUrl: row.website_url,
         adapterKey: row.adapter_key,
         enabled: row.enabled === 1
       }

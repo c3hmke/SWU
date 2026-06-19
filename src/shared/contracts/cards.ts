@@ -44,8 +44,17 @@ export type BulkCardSearchListingDto = CardListingDto & {
   cardImageUrl: string | null;
 };
 
+export type BulkCardSearchSellerCartDto = {
+  sellerId: string;
+  sellerName: string;
+  sellerSlug: string;
+  cartUrl: string | null;
+  itemCount: number;
+};
+
 export type BulkCardSearchResponseDto = {
   matchedCards: BulkCardSearchCardDto[];
   listings: BulkCardSearchListingDto[];
+  sellerCarts: BulkCardSearchSellerCartDto[];
   unmatchedNames: string[];
 };

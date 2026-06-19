@@ -9,6 +9,8 @@ type SellerGroup = {
   sellerName: string;
   listings: BulkCardSearchListingDto[];
   totalQuantity: number;
+  cartUrl: string | null;
+  cartItemCount: number;
 };
 
 const maxBulkSearchNames = 150;
@@ -26,13 +28,17 @@ const matchedCardsWithoutListings = computed(() =>
 );
 const sellerGroups = computed<SellerGroup[]>(() => {
   const groups = new Map<string, SellerGroup>();
+  const cartsBySeller = new Map((result.value?.sellerCarts ?? []).map(cart => [cart.sellerId, cart]));
 
   for (const listing of result.value?.listings ?? []) {
+    const cart = cartsBySeller.get(listing.sellerId);
     const group = groups.get(listing.sellerId) ?? {
       sellerId: listing.sellerId,
       sellerName: listing.sellerName,
       listings: [],
-      totalQuantity: 0
+      totalQuantity: 0,
+      cartUrl: cart?.cartUrl ?? null,
+      cartItemCount: cart?.itemCount ?? 0
     };
 
     group.listings.push(listing);
@@ -132,6 +138,7 @@ function clearInput() {
       <div class="panel-label">Bulk market scanner</div>
       <div class="bulk-grid">
         <label class="bulk-field">
+          <span>Card names</span>
           <textarea
             v-model="rawCardNames"
             placeholder="Paste one card name per line..."
@@ -173,8 +180,18 @@ function clearInput() {
       <div v-else class="seller-list">
         <article v-for="seller in sellerGroups" :key="seller.sellerId" class="seller-group">
           <header class="seller-header">
-            <strong>{{ seller.sellerName }}</strong>
-            <span>{{ seller.listings.length }} listings / {{ seller.totalQuantity }} cards</span>
+            <div class="seller-title">
+              <strong>{{ seller.sellerName }}</strong>
+              <span>{{ seller.listings.length }} listings / {{ seller.totalQuantity }} cards</span>
+            </div>
+            <a
+              v-if="seller.cartUrl"
+              class="cart-action"
+              :href="seller.cartUrl"
+              target="_blank"
+              rel="noreferrer"
+            >Add {{ seller.cartItemCount }} to cart</a>
+            <button v-else type="button" class="cart-action unavailable" disabled>Cart unavailable</button>
           </header>
 
           <div class="listing-list">
@@ -461,24 +478,57 @@ textarea:focus {
 .seller-header {
   align-items: center;
   border-bottom: 1px solid rgba(125, 211, 252, 0.18);
-  display: flex;
+  display: grid;
   gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
   justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 10px;
 }
 
-.seller-header strong {
+.seller-title {
+  display: grid;
+  gap: 4px;
+}
+
+.seller-title strong {
   color: #f8fafc;
   font-size: 1rem;
 }
 
-.seller-header span {
+.seller-title span {
   color: #fbbf24;
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.cart-action {
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.44);
+  color: #fde68a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 9px 11px;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cart-action:hover {
+  background: rgba(251, 191, 36, 0.22);
+  border-color: rgba(251, 191, 36, 0.64);
+}
+
+.cart-action.unavailable {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .listing-card {
@@ -628,6 +678,14 @@ textarea:focus {
   .seller-header {
     align-items: start;
     display: grid;
+  }
+
+  .seller-header {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-action {
+    justify-self: start;
   }
 }
 </style>
