@@ -42,6 +42,7 @@ export type BulkCardSearchCardDto = {
   name: string;
   imageUrl: string | null;
   requestedQuantity: number;
+  missingQuantity: number;
 };
 
 export type BulkCardSearchListingDto = CardListingDto & {

@@ -12,8 +12,7 @@ type SellerGroup = {
   sellerId: string;
   sellerName: string;
   listings: BulkCardSearchListingDto[];
-  totalRequestedQuantity: number;
-  requestedCardIds: Set<string>;
+  totalMatchedQuantity: number;
   cartUrl: string | null;
   cartItemCount: number;
 };
@@ -27,9 +26,8 @@ const result = ref<BulkCardSearchResponseDto | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const parsedCards = computed(() => parseCardList(rawCardNames.value));
-const matchedCardIdsWithListings = computed(() => new Set(result.value?.listings.map(listing => listing.cardId) ?? []));
 const matchedCardsWithoutListings = computed(() =>
-  result.value?.matchedCards.filter(card => !matchedCardIdsWithListings.value.has(card.id)) ?? []
+  result.value?.matchedCards.filter(card => card.missingQuantity > 0) ?? []
 );
 const sellerGroups = computed<SellerGroup[]>(() => {
   const groups = new Map<string, SellerGroup>();
@@ -41,17 +39,13 @@ const sellerGroups = computed<SellerGroup[]>(() => {
       sellerId: listing.sellerId,
       sellerName: listing.sellerName,
       listings: [],
-      totalRequestedQuantity: 0,
-      requestedCardIds: new Set<string>(),
+      totalMatchedQuantity: 0,
       cartUrl: cart?.cartUrl ?? null,
       cartItemCount: cart?.itemCount ?? 0
     };
 
     group.listings.push(listing);
-    if (!group.requestedCardIds.has(listing.cardId)) {
-      group.requestedCardIds.add(listing.cardId);
-      group.totalRequestedQuantity += listing.requestedQuantity;
-    }
+    group.totalMatchedQuantity += listing.requestedQuantity;
     groups.set(listing.sellerId, group);
   }
 
@@ -215,7 +209,7 @@ function clearInput() {
       </div>
 
       <p v-if="sellerGroups.length === 0" class="muted screen-message">
-        No active listings have enough stock for the matched cards.
+        No active listings were found for the matched cards.
       </p>
 
       <div v-else class="seller-list">
@@ -223,7 +217,7 @@ function clearInput() {
           <header class="seller-header">
             <div class="seller-title">
               <strong>{{ seller.sellerName }}</strong>
-              <span>{{ seller.listings.length }} listings / {{ seller.totalRequestedQuantity }} requested</span>
+              <span>{{ seller.listings.length }} listings / {{ seller.totalMatchedQuantity }} matched</span>
             </div>
             <a
               v-if="seller.cartUrl"
@@ -263,7 +257,7 @@ function clearInput() {
         <div class="subsection-heading">Matched, no current stock</div>
         <div class="name-chip-list">
           <RouterLink v-for="card in matchedCardsWithoutListings" :key="card.id" class="name-chip" :to="`/cards/${card.id}`">
-            {{ card.requestedQuantity }}x {{ card.name }}
+            {{ card.missingQuantity }}x {{ card.name }}
           </RouterLink>
         </div>
       </section>

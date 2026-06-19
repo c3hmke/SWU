@@ -101,9 +101,10 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
   const requestedQuantityByCardId = new Map(
     cards.map(card => [card.id, names.find(name => name.normalizedName === normalizeCardName(card.name))?.quantity ?? 1])
   );
-  const listings: BulkSearchListing[] = (await listActiveListingsByCardIds(db, cards.map(card => card.id)))
-    .map(listing => ({ ...listing, requestedQuantity: requestedQuantityByCardId.get(listing.cardId) ?? 1 }))
-    .filter(listing => listing.quantity >= listing.requestedQuantity);
+  const allocation = allocateListings(
+    await listActiveListingsByCardIds(db, cards.map(card => card.id)),
+    requestedQuantityByCardId
+  );
   const adapters = createAdapterRegistry();
 
   return {
@@ -111,14 +112,46 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
       id: card.id,
       name: card.name,
       imageUrl: card.imageUrl,
-      requestedQuantity: requestedQuantityByCardId.get(card.id) ?? 1
+      requestedQuantity: requestedQuantityByCardId.get(card.id) ?? 1,
+      missingQuantity: allocation.remainingQuantityByCardId.get(card.id) ?? 0
     })),
-    listings: listings.map(mapBulkListingDto),
-    sellerCarts: createSellerCarts(listings, adapters),
+    listings: allocation.listings.map(mapBulkListingDto),
+    sellerCarts: createSellerCarts(allocation.listings, adapters),
     unmatchedNames: names
       .filter(name => !matchedNormalizedNames.has(name.normalizedName))
       .map(name => name.originalName)
   };
+}
+
+function allocateListings(
+  listings: Awaited<ReturnType<typeof listActiveListingsByCardIds>>,
+  requestedQuantityByCardId: Map<string, number>
+): { listings: BulkSearchListing[]; remainingQuantityByCardId: Map<string, number> } {
+  const remainingQuantityByCardId = new Map(requestedQuantityByCardId);
+  const allocatedListings: BulkSearchListing[] = [];
+
+  for (const listing of [...listings].sort(compareListingsForAllocation)) {
+    const remainingQuantity = remainingQuantityByCardId.get(listing.cardId) ?? 0;
+    const allocatedQuantity = Math.min(remainingQuantity, listing.quantity);
+
+    if (allocatedQuantity <= 0) {
+      continue;
+    }
+
+    allocatedListings.push({ ...listing, requestedQuantity: allocatedQuantity });
+    remainingQuantityByCardId.set(listing.cardId, remainingQuantity - allocatedQuantity);
+  }
+
+  return { listings: allocatedListings, remainingQuantityByCardId };
+}
+
+function compareListingsForAllocation(
+  left: Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number],
+  right: Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number]
+): number {
+  return left.cardName.localeCompare(right.cardName)
+    || left.priceNzd - right.priceNzd
+    || left.sellerName.localeCompare(right.sellerName);
 }
 
 function normalizeRequestedCards(cards: BulkCardSearchRequestDto['cards']): Array<{
@@ -195,7 +228,7 @@ function createSellerCarts(
       adapterKey: firstListing.sellerAdapterKey,
       enabled: true
     };
-    const cartListings = selectCheapestListingPerCard(sellerListings);
+    const cartListings = sellerListings;
     const cartUrl = adapters.get(seller.adapterKey)?.createCartUrl?.(seller, cartListings) ?? null;
 
     return {
@@ -206,22 +239,6 @@ function createSellerCarts(
       itemCount: cartUrl ? cartListings.reduce((total, listing) => total + listing.requestedQuantity, 0) : 0
     };
   });
-}
-
-function selectCheapestListingPerCard(
-  listings: BulkSearchListing[]
-): BulkSearchListing[] {
-  const listingsByCard = new Map<string, BulkSearchListing>();
-
-  for (const listing of listings) {
-    const current = listingsByCard.get(listing.cardId);
-
-    if (!current || listing.priceNzd < current.priceNzd) {
-      listingsByCard.set(listing.cardId, listing);
-    }
-  }
-
-  return [...listingsByCard.values()];
 }
 
 function normalizeCardName(name: string): string {
