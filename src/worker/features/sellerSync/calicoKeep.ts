@@ -66,7 +66,7 @@ export class CalicoKeepStorepassAdapter implements SellerAdapter {
   createCartUrl(seller: Seller, listings: SellerCartListing[]): string | null {
     const cartItems = listings
       .filter(listing => /^\d+$/.test(listing.externalId))
-      .map(listing => `${listing.externalId}:1`);
+      .map(listing => `${listing.externalId}:${listing.requestedQuantity}`);
 
     if (cartItems.length === 0) {
       return null;

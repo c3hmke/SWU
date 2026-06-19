@@ -1,13 +1,13 @@
-import type { BulkCardSearchResponseDto } from '../../../shared/contracts/cards';
+import type { BulkCardSearchRequestCardDto, BulkCardSearchResponseDto } from '../../../shared/contracts/cards';
 import { apiUrl } from '../../api';
 
-export async function bulkSearchCards(names: string[]): Promise<BulkCardSearchResponseDto> {
+export async function bulkSearchCards(cards: BulkCardSearchRequestCardDto[]): Promise<BulkCardSearchResponseDto> {
   const response = await fetch(apiUrl('/api/cards/bulk-search'), {
     method: 'POST',
     headers: {
       'content-type': 'application/json'
     },
-    body: JSON.stringify({ names })
+    body: JSON.stringify({ cards })
   });
 
   if (!response.ok) {

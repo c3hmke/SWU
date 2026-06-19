@@ -28,20 +28,27 @@ export type CardListingDto = {
   lastSeenAt: string;
 };
 
+export type BulkCardSearchRequestCardDto = {
+  name: string;
+  quantity: number;
+};
+
 export type BulkCardSearchRequestDto = {
-  names: string[];
+  cards: BulkCardSearchRequestCardDto[];
 };
 
 export type BulkCardSearchCardDto = {
   id: string;
   name: string;
   imageUrl: string | null;
+  requestedQuantity: number;
 };
 
 export type BulkCardSearchListingDto = CardListingDto & {
   cardId: string;
   cardName: string;
   cardImageUrl: string | null;
+  requestedQuantity: number;
 };
 
 export type BulkCardSearchSellerCartDto = {

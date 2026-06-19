@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import StackedCardsIcon from '../../components/StackedCardsIcon.vue';
-import type { BulkCardSearchListingDto, BulkCardSearchResponseDto } from '../../../shared/contracts/cards';
+import type {
+  BulkCardSearchListingDto,
+  BulkCardSearchRequestCardDto,
+  BulkCardSearchResponseDto
+} from '../../../shared/contracts/cards';
 import { bulkSearchCards } from './useBulkCardSearch';
 
 type SellerGroup = {
   sellerId: string;
   sellerName: string;
   listings: BulkCardSearchListingDto[];
-  totalQuantity: number;
+  totalRequestedQuantity: number;
+  requestedCardIds: Set<string>;
   cartUrl: string | null;
   cartItemCount: number;
 };
@@ -21,7 +26,7 @@ const errorMessage = ref<string | null>(null);
 const result = ref<BulkCardSearchResponseDto | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const parsedNames = computed(() => parseCardNames(rawCardNames.value));
+const parsedCards = computed(() => parseCardList(rawCardNames.value));
 const matchedCardIdsWithListings = computed(() => new Set(result.value?.listings.map(listing => listing.cardId) ?? []));
 const matchedCardsWithoutListings = computed(() =>
   result.value?.matchedCards.filter(card => !matchedCardIdsWithListings.value.has(card.id)) ?? []
@@ -36,13 +41,17 @@ const sellerGroups = computed<SellerGroup[]>(() => {
       sellerId: listing.sellerId,
       sellerName: listing.sellerName,
       listings: [],
-      totalQuantity: 0,
+      totalRequestedQuantity: 0,
+      requestedCardIds: new Set<string>(),
       cartUrl: cart?.cartUrl ?? null,
       cartItemCount: cart?.itemCount ?? 0
     };
 
     group.listings.push(listing);
-    group.totalQuantity += listing.quantity;
+    if (!group.requestedCardIds.has(listing.cardId)) {
+      group.requestedCardIds.add(listing.cardId);
+      group.totalRequestedQuantity += listing.requestedQuantity;
+    }
     groups.set(listing.sellerId, group);
   }
 
@@ -65,35 +74,67 @@ function formatCondition(condition: string | null): string {
   return conditionLabels[condition.trim().toLowerCase()] ?? condition;
 }
 
-function parseCardNames(value: string): string[] {
-  const seen = new Set<string>();
-  const names: string[] = [];
+function parseCardList(value: string): BulkCardSearchRequestCardDto[] {
+  const cards = new Map<string, BulkCardSearchRequestCardDto>();
 
   for (const line of value.split(/\r?\n|;/)) {
-    const name = line
-      .replace(/^\s*(?:[-*]|\d+[.)])\s*/, '')
-      .replace(/^\s*\d+\s*x?\s+/i, '')
-      .replace(/\s+x\d+\s*$/i, '')
-      .trim()
-      .replace(/\s+/g, ' ');
-    const key = name.toLowerCase();
+    const item = parseCardListLine(line);
+    if (!item) continue;
 
-    if (key && !seen.has(key)) {
-      seen.add(key);
-      names.push(name);
+    const key = item.name.toLowerCase();
+    const existing = cards.get(key);
+
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      cards.set(key, item);
     }
   }
 
-  return names;
+  return [...cards.values()];
+}
+
+function parseCardListLine(line: string): BulkCardSearchRequestCardDto | null {
+  const cleanLine = line
+      .replace(/^\s*(?:[-*]|\d+[.)])\s*/, '')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+  if (!cleanLine) {
+    return null;
+  }
+
+  const firstSpaceIndex = cleanLine.indexOf(' ');
+  if (firstSpaceIndex === -1) {
+    return { name: cleanLine, quantity: 1 };
+  }
+
+  const maybeQuantity = cleanLine.slice(0, firstSpaceIndex);
+  const quantity = parseQuantityToken(maybeQuantity);
+
+  if (!quantity) {
+    return { name: cleanLine, quantity: 1 };
+  }
+
+  const name = cleanLine.slice(firstSpaceIndex + 1).trim();
+  return name ? { name, quantity } : null;
+}
+
+function parseQuantityToken(token: string): number | null {
+  const match = token.match(/^(?:x(\d+)|(\d+)x?)$/i);
+  if (!match) return null;
+
+  const quantity = Number.parseInt(match[1] ?? match[2], 10);
+  return quantity > 0 ? quantity : null;
 }
 
 async function runLookup() {
-  if (parsedNames.value.length === 0) {
+  if (parsedCards.value.length === 0) {
     errorMessage.value = 'Paste or upload at least one card name.';
     return;
   }
 
-  if (parsedNames.value.length > maxBulkSearchNames) {
+  if (parsedCards.value.length > maxBulkSearchNames) {
     errorMessage.value = `Bulk lookup supports up to ${maxBulkSearchNames} unique card names.`;
     return;
   }
@@ -102,7 +143,7 @@ async function runLookup() {
   errorMessage.value = null;
 
   try {
-    result.value = await bulkSearchCards(parsedNames.value);
+    result.value = await bulkSearchCards(parsedCards.value);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Unable to run bulk lookup';
   } finally {
@@ -148,10 +189,10 @@ function clearInput() {
 
         <aside class="upload-console">
           <span class="console-kicker">Input stream</span>
-          <p>Paste a deck list or upload a plain text list. Quantities and bullet prefixes are ignored.</p>
+          <p>Paste a deck list or upload a plain text list. Use quantities like 2 Waylay, 2x Waylay, or x2 Waylay.</p>
           <input ref="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" @change="handleFileUpload" />
           <div class="lookup-stats">
-            <strong>{{ parsedNames.length.toString().padStart(2, '0') }}</strong>
+            <strong>{{ parsedCards.length.toString().padStart(2, '0') }}</strong>
             <span>unique names ready</span>
           </div>
         </aside>
@@ -174,7 +215,7 @@ function clearInput() {
       </div>
 
       <p v-if="sellerGroups.length === 0" class="muted screen-message">
-        No active listings were found for the matched cards.
+        No active listings have enough stock for the matched cards.
       </p>
 
       <div v-else class="seller-list">
@@ -182,7 +223,7 @@ function clearInput() {
           <header class="seller-header">
             <div class="seller-title">
               <strong>{{ seller.sellerName }}</strong>
-              <span>{{ seller.listings.length }} listings / {{ seller.totalQuantity }} cards</span>
+              <span>{{ seller.listings.length }} listings / {{ seller.totalRequestedQuantity }} requested</span>
             </div>
             <a
               v-if="seller.cartUrl"
@@ -206,7 +247,7 @@ function clearInput() {
 
               <div class="listing-stats">
                 <span class="stat-cell condition-code">{{ formatCondition(listing.condition) }}</span>
-                <span class="stat-cell quantity-cell"><StackedCardsIcon />{{ listing.quantity }}</span>
+                <span class="stat-cell quantity-cell"><StackedCardsIcon />{{ listing.requestedQuantity }}/{{ listing.quantity }}</span>
                 <strong class="stat-cell price-cell">{{ formatPrice(listing.priceNzd) }}</strong>
               </div>
 
@@ -222,7 +263,7 @@ function clearInput() {
         <div class="subsection-heading">Matched, no current stock</div>
         <div class="name-chip-list">
           <RouterLink v-for="card in matchedCardsWithoutListings" :key="card.id" class="name-chip" :to="`/cards/${card.id}`">
-            {{ card.name }}
+            {{ card.requestedQuantity }}x {{ card.name }}
           </RouterLink>
         </div>
       </section>

@@ -33,6 +33,7 @@ export type SellerCartListing = {
   externalId: string;
   productUrl: string;
   quantity: number;
+  requestedQuantity: number;
 };
 
 export type SellerAdapter = {
