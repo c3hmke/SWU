@@ -8,8 +8,15 @@ defineProps<{
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(price);
 
-const formatSeenAt = (seenAt: string) =>
-  new Intl.DateTimeFormat('en-NZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(seenAt));
+function formatSeenAt(seenAt: string): string {
+  const date = new Date(seenAt);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${month}-${day} ${hours}:${minutes}`;
+}
 
 const conditionLabels: Record<string, string> = {
   'near mint': 'NM',
@@ -51,7 +58,7 @@ function formatCondition(condition: string | null): string {
         </div>
 
         <div class="listing-actions">
-          <span class="muted">Seen {{ formatSeenAt(listing.lastSeenAt) }}</span>
+          <span class="seen-cell"><span aria-hidden="true">⌖</span>{{ formatSeenAt(listing.lastSeenAt) }}</span>
         </div>
       </article>
     </div>
@@ -241,7 +248,27 @@ h2 {
 }
 
 .listing-actions {
-  justify-items: end;
+  justify-content: end;
+}
+
+.seen-cell {
+  align-items: center;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  color: #cbd5e1;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  gap: 6px;
+  letter-spacing: 0.08em;
+  padding: 7px 8px;
+  white-space: nowrap;
+}
+
+.seen-cell span {
+  color: #fbbf24;
+  font-size: 0.82rem;
+  line-height: 1;
 }
 
 @media (max-width: 720px) {
@@ -264,7 +291,7 @@ h2 {
   }
 
   .listing-actions {
-    justify-items: start;
+    justify-content: start;
   }
 }
 </style>
