@@ -6,6 +6,7 @@ type CardRow = {
   set_code: string;
   set_name: string | null;
   collector_number: number;
+  total_cards: number | null;
   image_url: string | null;
 };
 
@@ -54,7 +55,7 @@ export async function getCardById(db: D1Database, id: string): Promise<Card | nu
   const row = await db
     .prepare(
       `select c.id, c.name, c.set_code, s.name as set_name,
-              c.collector_number, c.image_url
+              c.collector_number, s.total_cards, c.image_url
        from cards c
        left join sets s on s.code = c.set_code
        where c.id = ?1`
@@ -89,6 +90,7 @@ function mapCard(row: CardRow): Card {
     setCode: row.set_code,
     setName: row.set_name,
     collectorNumber: row.collector_number,
+    totalCards: row.total_cards,
     imageUrl: row.image_url
   };
 }

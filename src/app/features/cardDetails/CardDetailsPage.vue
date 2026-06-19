@@ -12,7 +12,8 @@ const card = ref<CardDetailsDto | null>(null);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
-const formatCollectorNumber = (collectorNumber: number) => collectorNumber.toString().padStart(3, '0');
+const formatSetPosition = (card: CardDetailsDto) =>
+  `${card.setName || card.setCode} ${card.collectorNumber}/${card.totalCards ?? '?'}`;
 
 async function loadCard() {
   isLoading.value = true;
@@ -43,9 +44,9 @@ watch(() => props.cardId, loadCard);
       </div>
 
       <div class="card-summary">
-        <div>
-          <span class="card-id">Databank {{ card.id }} ::: </span>
-          <span class="eyebrow">[{{ card.setName || card.setCode }} {{ formatCollectorNumber(card.collectorNumber) }}]</span>
+        <div class="summary-readout">
+          <span class="card-id">::: Databank {{ card.id }} ::: </span>
+          <span class="eyebrow">{{ formatSetPosition(card) }}</span>
         </div>
         <h1>{{ card.name }}</h1>
       </div>
@@ -58,7 +59,7 @@ watch(() => props.cardId, loadCard);
 <style scoped>
 .card-page {
   display: grid;
-  gap: 22px;
+  gap: 12px;
   margin: 0 auto;
   max-width: 1040px;
 }
@@ -75,7 +76,7 @@ watch(() => props.cardId, loadCard);
     0 0 42px rgba(14, 165, 233, 0.08);
   clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
   display: grid;
-  gap: clamp(18px, 3vw, 32px);
+  gap: clamp(10px, 3vw, 10px);
   grid-template-columns: minmax(280px, 420px) 1fr;
   overflow: hidden;
   padding: clamp(10px, 1.8vw, 0px) clamp(14px, 2.5vw, 24px) clamp(14px, 2.5vw, 24px);
@@ -145,12 +146,21 @@ watch(() => props.cardId, loadCard);
   padding: clamp(12px, 2vw, 18px) clamp(8px, 2vw, 18px);
 }
 
+.summary-readout {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 .card-id {
   color: #fbbf24;
+  flex: 1 1 auto;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
-  margin: 0 0 8px;
+  min-width: 0;
   text-transform: uppercase;
 }
 
@@ -159,8 +169,22 @@ watch(() => props.cardId, loadCard);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.12em;
-  margin: 0 0 16px;
+  text-align: right;
+  text-shadow: 0 0 18px rgba(14, 165, 233, 0.34);
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eyebrow::before {
+  content: '[';
+  color: rgba(125, 211, 252, 0.62);
+  margin-right: 6px;
+}
+
+.eyebrow::after {
+  content: ']';
+  color: rgba(125, 211, 252, 0.62);
+  margin-left: 6px;
 }
 
 h1 {
@@ -178,6 +202,15 @@ h1 {
   .image-frame {
     max-width: 410px;
     width: 100%;
+  }
+
+  .summary-readout {
+    align-items: start;
+    display: grid;
+  }
+
+  .eyebrow {
+    text-align: left;
   }
 }
 </style>

@@ -4,6 +4,7 @@ export type CardDetailsDto = {
   setCode: string;
   setName: string | null;
   collectorNumber: number;
+  totalCards: number | null;
   imageUrl: string | null;
   listings: CardListingDto[];
 };

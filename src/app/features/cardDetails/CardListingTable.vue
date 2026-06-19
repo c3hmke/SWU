@@ -14,10 +14,10 @@ const formatSeenAt = (seenAt: string) =>
 
 <template>
   <section class="listings-panel">
-    <div class="panel-label">Seller telemetry</div>
     <div class="section-heading">
-      <h2>Available Listings</h2>
-      <p class="muted">Sorted by lowest price first.</p>
+      <div class="listings-console-header">
+        <span class="panel-label">Seller telemetry</span><h2>Available listings</h2>
+      </div>
     </div>
 
     <p v-if="listings.length === 0" class="muted">No sellers currently have this card in stock.</p>
@@ -86,12 +86,27 @@ const formatSeenAt = (seenAt: string) =>
   width: 18px;
 }
 
+.section-heading {
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+}
+
+.listings-console-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
 .panel-label {
   color: #fbbf24;
+  flex: 1 1 auto;
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.18em;
-  margin-bottom: 10px;
+  min-width: 0;
   text-transform: uppercase;
 }
 
@@ -100,10 +115,13 @@ const formatSeenAt = (seenAt: string) =>
   color: #38bdf8;
 }
 
-.section-heading {
-  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+.panel-label::after {
+  content: '';
+  border-top: 1px solid rgba(251, 191, 36, 0.34);
+  display: inline-block;
+  margin-left: 12px;
+  transform: translateY(-0.25em);
+  width: min(18vw, 160px);
 }
 
 h2,
@@ -112,8 +130,14 @@ p {
 }
 
 h2 {
-  font-size: clamp(1.3rem, 2vw, 1.8rem);
-  letter-spacing: -0.03em;
+  color: #7dd3fc;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-align: right;
+  text-shadow: 0 0 18px rgba(14, 165, 233, 0.34);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .listing-list {
@@ -167,6 +191,15 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  .listings-console-header {
+    align-items: start;
+    display: grid;
+  }
+
+  h2 {
+    text-align: left;
+  }
+
   .listing-card {
     grid-template-columns: 1fr;
   }
