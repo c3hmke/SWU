@@ -27,6 +27,12 @@ export type CardListing = {
   lastSeenAt: string;
 };
 
+export type BulkCardListing = CardListing & {
+  cardId: string;
+  cardName: string;
+  cardImageUrl: string | null;
+};
+
 export type CardListSearchCriteria = {
   name: string | null;
 };

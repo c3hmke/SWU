@@ -1,4 +1,4 @@
-import type { Card, CardListItem, CardListSearchCriteria, CardListing } from './model';
+import type { BulkCardListing, Card, CardListItem, CardListSearchCriteria, CardListing } from './model';
 
 type CardRow = {
   id: string;
@@ -27,6 +27,12 @@ type ListingRow = {
   quantity: number;
   product_url: string;
   last_seen_at: string;
+};
+
+type BulkListingRow = ListingRow & {
+  card_id: string;
+  card_name: string;
+  card_image_url: string | null;
 };
 
 export async function listCardsByChasePrice(
@@ -66,6 +72,27 @@ export async function getCardById(db: D1Database, id: string): Promise<Card | nu
   return row ? mapCard(row) : null;
 }
 
+export async function listCardsByExactNormalizedNames(db: D1Database, normalizedNames: string[]): Promise<Card[]> {
+  if (normalizedNames.length === 0) {
+    return [];
+  }
+
+  const placeholders = normalizedNames.map((_, index) => `?${index + 1}`).join(', ');
+  const result = await db
+    .prepare(
+      `select c.id, c.name, c.set_code, s.name as set_name,
+              c.collector_number, s.total_cards, c.image_url
+       from cards c
+       left join sets s on s.code = c.set_code
+       where lower(trim(c.name)) in (${placeholders})
+       order by c.name asc, c.set_code asc, c.collector_number asc`
+    )
+    .bind(...normalizedNames)
+    .all<CardRow>();
+
+  return result.results.map(mapCard);
+}
+
 export async function listActiveListingsByCardId(db: D1Database, cardId: string): Promise<CardListing[]> {
   const result = await db
     .prepare(
@@ -81,6 +108,35 @@ export async function listActiveListingsByCardId(db: D1Database, cardId: string)
     .all<ListingRow>();
 
   return result.results.map(mapListing);
+}
+
+export async function listActiveListingsByCardIds(db: D1Database, cardIds: string[]): Promise<BulkCardListing[]> {
+  if (cardIds.length === 0) {
+    return [];
+  }
+
+  const placeholders = cardIds.map((_, index) => `?${index + 1}`).join(', ');
+  const result = await db
+    .prepare(
+      `select l.id, l.seller_id, s.name as seller_name, s.slug as seller_slug,
+              l.condition, l.price_nzd, l.quantity, l.product_url, l.last_seen_at,
+              c.id as card_id, c.name as card_name, c.image_url as card_image_url
+       from listings l
+       inner join sellers s on s.id = l.seller_id
+       inner join cards c on c.id = l.card_id
+       where l.card_id in (${placeholders})
+       and l.quantity > 0
+       order by s.name asc, c.name asc, l.price_nzd asc`
+    )
+    .bind(...cardIds)
+    .all<BulkListingRow>();
+
+  return result.results.map(row => ({
+    ...mapListing(row),
+    cardId: row.card_id,
+    cardName: row.card_name,
+    cardImageUrl: row.card_image_url
+  }));
 }
 
 function mapCard(row: CardRow): Card {

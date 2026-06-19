@@ -27,3 +27,25 @@ export type CardListingDto = {
   productUrl: string;
   lastSeenAt: string;
 };
+
+export type BulkCardSearchRequestDto = {
+  names: string[];
+};
+
+export type BulkCardSearchCardDto = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+};
+
+export type BulkCardSearchListingDto = CardListingDto & {
+  cardId: string;
+  cardName: string;
+  cardImageUrl: string | null;
+};
+
+export type BulkCardSearchResponseDto = {
+  matchedCards: BulkCardSearchCardDto[];
+  listings: BulkCardSearchListingDto[];
+  unmatchedNames: string[];
+};
