@@ -34,7 +34,13 @@ export default {
   },
 
   async scheduled(_controller: ScheduledController, env: WorkerEnv, _ctx: ExecutionContext): Promise<void> {
-    await syncSeller(env.DB, createAdapterRegistry(), 'calico-keep');
+    for (const sellerSlug of ['calico-keep', 'rogue-ops']) {
+      try {
+        await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
+      } catch (error) {
+        console.error(`Scheduled sync failed for ${sellerSlug}`, error);
+      }
+    }
   }
 };
 

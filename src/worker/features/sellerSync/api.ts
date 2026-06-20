@@ -6,8 +6,9 @@ import { syncSeller } from './syncSeller';
 
 export async function sellerSyncRoutes(request: Request, env: WorkerEnv): Promise<Response> {
   const url = new URL(request.url);
+  const match = url.pathname.match(/^\/api\/sync\/([^/]+)$/);
 
-  if (url.pathname !== '/api/sync/calico-keep' || request.method !== 'POST') {
+  if (!match || request.method !== 'POST') {
     return createJsonResponse({ error: 'Not found' }, 404, request);
   }
 
@@ -16,7 +17,7 @@ export async function sellerSyncRoutes(request: Request, env: WorkerEnv): Promis
   }
 
   try {
-    const result = await syncSeller(env.DB, createAdapterRegistry(), 'calico-keep');
+    const result = await syncSeller(env.DB, createAdapterRegistry(), decodeURIComponent(match[1]));
     return createJsonResponse(result, 200, request);
   } catch (error) {
     if (error instanceof NotFoundError) {

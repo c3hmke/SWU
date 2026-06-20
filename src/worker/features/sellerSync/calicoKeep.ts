@@ -1,4 +1,5 @@
 import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from './model';
+import { RogueOpsAdapter } from './rogueOps';
 
 const BATCH_SIZE = 200;
 const STOREPASS_STORE_ID = 'MInamaYs3W';
@@ -79,8 +80,12 @@ export class CalicoKeepStorepassAdapter implements SellerAdapter {
 
 export function createAdapterRegistry(): Map<string, SellerAdapter> {
   const calicoKeepAdapter = new CalicoKeepStorepassAdapter();
+  const rogueOpsAdapter = new RogueOpsAdapter();
 
-  return new Map([[calicoKeepAdapter.key, calicoKeepAdapter]]);
+  return new Map<string, SellerAdapter>([
+    [calicoKeepAdapter.key, calicoKeepAdapter],
+    [rogueOpsAdapter.key, rogueOpsAdapter]
+  ]);
 }
 
 async function searchCards(cards: { name: string }[]): Promise<StorepassListResponse> {
