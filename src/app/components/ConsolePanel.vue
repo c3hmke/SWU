@@ -16,6 +16,8 @@ withDefaults(defineProps<{
 
 <style scoped>
 .console-panel {
+  --corner-clearance: clamp(28px, 3vw, 34px);
+
   border: 1px solid rgba(125, 211, 252, 0.28);
   box-shadow:
     0 0 0 1px rgba(15, 23, 42, 0.86) inset,
@@ -62,7 +64,7 @@ withDefaults(defineProps<{
     radial-gradient(circle at 8% 0, rgba(14, 165, 233, 0.2), transparent 34%),
     linear-gradient(135deg, rgba(8, 13, 26, 0.96), rgba(15, 23, 42, 0.82));
   gap: 12px;
-  padding: 18px clamp(16px, 3vw, 26px) 20px;
+  padding: 18px clamp(16px, 3vw, 26px) var(--corner-clearance);
 }
 
 .variant-results {
@@ -70,7 +72,7 @@ withDefaults(defineProps<{
     radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.16), transparent 34%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.78));
   gap: 18px;
-  padding: clamp(16px, 2.6vw, 28px);
+  padding: clamp(16px, 2.6vw, 28px) clamp(16px, 2.6vw, 28px) var(--corner-clearance);
 }
 
 .variant-hero {
@@ -81,7 +83,7 @@ withDefaults(defineProps<{
   clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
   gap: clamp(10px, 3vw, 10px);
   grid-template-columns: minmax(280px, 420px) 1fr;
-  padding: clamp(10px, 1.8vw, 0px) clamp(14px, 2.5vw, 24px) clamp(14px, 2.5vw, 24px);
+  padding: clamp(10px, 1.8vw, 0px) clamp(14px, 2.5vw, 24px) var(--corner-clearance);
 }
 
 .variant-hero::before {
