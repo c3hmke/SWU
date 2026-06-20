@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import StackedCardsIcon from '../../components/StackedCardsIcon.vue';
 import type {
   BulkCardSearchListingDto,
   BulkCardSearchRequestCardDto,
   BulkCardSearchResponseDto
 } from '../../../shared/contracts/cards';
+import ActionButton from '../../components/ActionButton.vue';
+import AppPage from '../../components/AppPage.vue';
+import CardImageFrame from '../../components/CardImageFrame.vue';
+import ConsoleHeader from '../../components/ConsoleHeader.vue';
+import ConsoleLabel from '../../components/ConsoleLabel.vue';
+import ConsolePanel from '../../components/ConsolePanel.vue';
+import ExternalIconLink from '../../components/ExternalIconLink.vue';
+import ListingRow from '../../components/ListingRow.vue';
+import ListingStats from '../../components/ListingStats.vue';
+import NameChip from '../../components/NameChip.vue';
 import { bulkSearchCards } from './useBulkCardSearch';
 
 type SellerGroup = {
@@ -51,22 +60,6 @@ const sellerGroups = computed<SellerGroup[]>(() => {
 
   return [...groups.values()].sort((a, b) => a.sellerName.localeCompare(b.sellerName));
 });
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(price);
-
-const conditionLabels: Record<string, string> = {
-  'near mint': 'NM',
-  'light play': 'LP',
-  'moderate play': 'MP',
-  'heavy play': 'HP',
-  damaged: 'D'
-};
-
-function formatCondition(condition: string | null): string {
-  if (!condition) return 'U';
-  return conditionLabels[condition.trim().toLowerCase()] ?? condition;
-}
 
 function parseCardList(value: string): BulkCardSearchRequestCardDto[] {
   const cards = new Map<string, BulkCardSearchRequestCardDto>();
@@ -168,9 +161,9 @@ function clearInput() {
 </script>
 
 <template>
-  <section class="bulk-page">
-    <section class="bulk-panel" aria-label="Bulk card lookup controls">
-      <div class="panel-label">Bulk market scanner</div>
+  <AppPage>
+    <ConsolePanel variant="control" aria-label="Bulk card lookup controls">
+      <ConsoleLabel>Bulk market scanner</ConsoleLabel>
       <div class="bulk-grid">
         <label class="bulk-field">
           <span>Card names</span>
@@ -193,20 +186,17 @@ function clearInput() {
       </div>
 
       <div class="bulk-actions">
-        <button type="button" class="primary-action" :disabled="isLoading" @click="runLookup">
+        <ActionButton :disabled="isLoading" @click="runLookup">
           {{ isLoading ? 'Scanning...' : 'Find listings' }}
-        </button>
-        <button type="button" class="secondary-action" @click="clearInput">Clear</button>
+        </ActionButton>
+        <ActionButton variant="secondary" @click="clearInput">Clear</ActionButton>
       </div>
 
       <p v-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
-    </section>
+    </ConsolePanel>
 
-    <section v-if="result" class="results-panel" aria-live="polite">
-      <div class="screen-header">
-        <span>Seller groups</span>
-        <span>{{ result.listings.length.toString().padStart(2, '0') }} listings</span>
-      </div>
+    <ConsolePanel v-if="result" aria-live="polite">
+      <ConsoleHeader label="Seller groups" :meta="`${result.listings.length.toString().padStart(2, '0')} listings`" />
 
       <p v-if="sellerGroups.length === 0" class="muted screen-message">
         No active listings were found for the matched cards.
@@ -219,36 +209,26 @@ function clearInput() {
               <strong>{{ seller.sellerName }}</strong>
               <span>{{ seller.listings.length }} listings / {{ seller.totalMatchedQuantity }} matched</span>
             </div>
-            <a
-              v-if="seller.cartUrl"
-              class="cart-action"
-              :href="seller.cartUrl"
-              target="_blank"
-              rel="noreferrer"
-            >Add {{ seller.cartItemCount }} to cart</a>
-            <button v-else type="button" class="cart-action unavailable" disabled>Cart unavailable</button>
+            <ActionButton v-if="seller.cartUrl" :href="seller.cartUrl">Add {{ seller.cartItemCount }} to cart</ActionButton>
+            <ActionButton v-else disabled>Cart unavailable</ActionButton>
           </header>
 
           <div class="listing-list">
-            <article v-for="listing in seller.listings" :key="listing.id" class="listing-card">
+            <ListingRow v-for="listing in seller.listings" :key="listing.id" variant="bulk">
               <RouterLink class="card-link" :to="`/cards/${listing.cardId}`">
-                <span class="mini-image">
-                  <img v-if="listing.cardImageUrl" :src="listing.cardImageUrl" :alt="listing.cardName" loading="lazy" />
-                  <span v-else>No image</span>
-                </span>
+                <CardImageFrame :image-url="listing.cardImageUrl" :alt="listing.cardName" variant="mini" />
                 <strong>{{ listing.cardName }}</strong>
               </RouterLink>
 
-              <div class="listing-stats">
-                <span class="stat-cell condition-code">{{ formatCondition(listing.condition) }}</span>
-                <span class="stat-cell quantity-cell"><StackedCardsIcon />{{ listing.requestedQuantity }}/{{ listing.quantity }}</span>
-                <strong class="stat-cell price-cell">{{ formatPrice(listing.priceNzd) }}</strong>
-              </div>
+              <ListingStats
+                :condition="listing.condition"
+                :quantity="listing.quantity"
+                :price-nzd="listing.priceNzd"
+                :requested-quantity="listing.requestedQuantity"
+              />
 
-              <a class="seller-link" :href="listing.productUrl" target="_blank" rel="noreferrer" :aria-label="`View ${listing.cardName} at ${listing.sellerName}`">
-                <span aria-hidden="true">↗</span>
-              </a>
-            </article>
+              <ExternalIconLink size="md" :href="listing.productUrl" :label="`View ${listing.cardName} at ${listing.sellerName}`" />
+            </ListingRow>
           </div>
         </article>
       </div>
@@ -256,9 +236,9 @@ function clearInput() {
       <section v-if="matchedCardsWithoutListings.length" class="unmatched-panel">
         <div class="subsection-heading">Matched, no current stock</div>
         <div class="name-chip-list">
-          <RouterLink v-for="card in matchedCardsWithoutListings" :key="card.id" class="name-chip" :to="`/cards/${card.id}`">
+          <NameChip v-for="card in matchedCardsWithoutListings" :key="card.id" :to="`/cards/${card.id}`">
             {{ card.missingQuantity }}x {{ card.name }}
-          </RouterLink>
+          </NameChip>
         </div>
       </section>
 
@@ -266,81 +246,14 @@ function clearInput() {
         <div class="subsection-heading">Unmatched input</div>
         <p v-if="result.unmatchedNames.length === 0" class="muted screen-message">Every submitted card name matched the databank.</p>
         <div v-else class="name-chip-list">
-          <span v-for="name in result.unmatchedNames" :key="name" class="name-chip unmatched-chip">{{ name }}</span>
+          <NameChip v-for="name in result.unmatchedNames" :key="name" variant="warning">{{ name }}</NameChip>
         </div>
       </section>
-    </section>
-  </section>
+    </ConsolePanel>
+  </AppPage>
 </template>
 
 <style scoped>
-.bulk-page {
-  display: grid;
-  gap: 12px;
-  margin: 0 auto;
-  max-width: 1120px;
-}
-
-.bulk-panel,
-.results-panel {
-  position: relative;
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.86) inset,
-    0 18px 80px rgba(0, 0, 0, 0.26),
-    0 0 42px rgba(14, 165, 233, 0.08);
-  clip-path: polygon(0 16px, 16px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
-}
-
-.bulk-panel::before,
-.results-panel::before,
-.bulk-panel::after,
-.results-panel::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-.bulk-panel::before,
-.results-panel::before {
-  inset: 0;
-  background:
-    linear-gradient(rgba(125, 211, 252, 0.04) 50%, transparent 50%) 0 0 / 100% 6px,
-    linear-gradient(90deg, rgba(125, 211, 252, 0.08), transparent 18%, transparent 82%, rgba(251, 191, 36, 0.08));
-  mix-blend-mode: screen;
-  opacity: 0.42;
-}
-
-.bulk-panel::after,
-.results-panel::after {
-  border-bottom: 2px solid rgba(251, 191, 36, 0.74);
-  border-left: 2px solid rgba(251, 191, 36, 0.74);
-  bottom: 10px;
-  height: 18px;
-  left: 10px;
-  width: 18px;
-}
-
-.bulk-panel {
-  background:
-    radial-gradient(circle at 8% 0, rgba(14, 165, 233, 0.2), transparent 34%),
-    linear-gradient(135deg, rgba(8, 13, 26, 0.96), rgba(15, 23, 42, 0.82));
-  display: grid;
-  gap: 8px;
-  padding: 18px clamp(16px, 3vw, 26px) 20px;
-}
-
-.results-panel {
-  background:
-    radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.16), transparent 34%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.78));
-  display: grid;
-  gap: 12px;
-  padding: clamp(16px, 2.6vw, 28px);
-}
-
-.panel-label,
-.screen-header,
 .subsection-heading,
 .console-kicker {
   color: #fbbf24;
@@ -350,7 +263,6 @@ function clearInput() {
   text-transform: uppercase;
 }
 
-.panel-label::before,
 .subsection-heading::before {
   content: '//// ';
   color: #38bdf8;
@@ -377,8 +289,6 @@ function clearInput() {
 
 textarea,
 .upload-console,
-.name-chip,
-.listing-card,
 .seller-group {
   background:
     linear-gradient(90deg, rgba(2, 6, 23, 0.92), rgba(8, 47, 73, 0.4)),
@@ -457,50 +367,9 @@ textarea:focus {
   gap: 10px;
 }
 
-.bulk-actions button {
-  border-radius: 0;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  padding: 10px 14px;
-  text-transform: uppercase;
-}
-
-.primary-action {
-  background: rgba(251, 191, 36, 0.16);
-  border: 1px solid rgba(251, 191, 36, 0.48);
-  color: #fde68a;
-}
-
-.primary-action:disabled {
-  cursor: wait;
-  opacity: 0.64;
-}
-
-.secondary-action {
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(125, 211, 252, 0.3);
-  color: #bae6fd;
-}
-
-.screen-header {
-  align-items: center;
-  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 12px;
-}
-
-.screen-header span:last-child {
-  color: #7dd3fc;
-}
-
 .seller-list,
 .listing-list,
-.unmatched-panel,
-.name-chip-list {
+.unmatched-panel {
   display: grid;
   gap: 12px;
 }
@@ -539,42 +408,6 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-.cart-action {
-  background: rgba(251, 191, 36, 0.14);
-  border: 1px solid rgba(251, 191, 36, 0.44);
-  color: #fde68a;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  padding: 9px 11px;
-  text-decoration: none;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.cart-action:hover {
-  background: rgba(251, 191, 36, 0.22);
-  border-color: rgba(251, 191, 36, 0.64);
-}
-
-.cart-action.unavailable {
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.listing-card {
-  align-items: center;
-  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
-  padding: 6px;
-}
-
 .card-link {
   align-items: center;
   display: grid;
@@ -587,89 +420,6 @@ textarea:focus {
   color: #f8fafc;
 }
 
-.mini-image {
-  align-items: center;
-  background: rgba(2, 6, 23, 0.72);
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  display: flex;
-  height: 48px;
-  justify-content: center;
-  overflow: hidden;
-  width: 36px;
-}
-
-.mini-image img {
-  height: 100%;
-  object-fit: contain;
-  width: 100%;
-}
-
-.mini-image span {
-  color: #64748b;
-  font-size: 0.52rem;
-  font-weight: 900;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.listing-stats {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: 48px 76px 112px;
-}
-
-.stat-cell {
-  background: rgba(2, 6, 23, 0.5);
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  color: #cbd5e1;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  padding: 7px 8px;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.condition-code {
-  color: #7dd3fc;
-}
-
-.quantity-cell {
-  align-items: center;
-  display: inline-flex;
-  gap: 7px;
-  justify-content: center;
-}
-
-.price-cell {
-  color: #fbbf24;
-  font-size: 0.78rem;
-  letter-spacing: 0.05em;
-}
-
-.seller-link {
-  align-items: center;
-  background:
-    linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(251, 191, 36, 0.1)),
-    rgba(2, 6, 23, 0.72);
-  border: 1px solid rgba(125, 211, 252, 0.36);
-  box-shadow: 0 0 18px rgba(14, 165, 233, 0.12) inset;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-  color: #7dd3fc;
-  display: inline-flex;
-  font-size: 0.82rem;
-  font-weight: 900;
-  height: 32px;
-  justify-content: center;
-  text-decoration: none;
-  width: 32px;
-}
-
-.seller-link:hover {
-  border-color: rgba(251, 191, 36, 0.62);
-  color: #fbbf24;
-}
-
 .unmatched-panel {
   border-top: 1px solid rgba(125, 211, 252, 0.2);
   padding-top: 16px;
@@ -678,38 +428,16 @@ textarea:focus {
 .name-chip-list {
   display: flex;
   flex-wrap: wrap;
-}
-
-.name-chip {
-  color: #bae6fd;
-  font-size: 0.8rem;
-  font-weight: 800;
-  padding: 7px 9px;
-  text-decoration: none;
-}
-
-.unmatched-chip {
-  border-color: rgba(251, 191, 36, 0.26);
-  color: #fde68a;
+  gap: 12px;
 }
 
 @media (max-width: 860px) {
-  .bulk-grid,
-  .listing-card {
+  .bulk-grid {
     grid-template-columns: 1fr;
-  }
-
-  .listing-stats {
-    justify-content: start;
-  }
-
-  .seller-link {
-    justify-self: start;
   }
 }
 
 @media (max-width: 520px) {
-  .screen-header,
   .seller-header {
     align-items: start;
     display: grid;
@@ -719,7 +447,7 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
-  .cart-action {
+  :deep(.action-button) {
     justify-self: start;
   }
 }

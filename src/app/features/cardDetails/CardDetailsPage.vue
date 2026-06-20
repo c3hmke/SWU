@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CardDetailsDto } from '../../../shared/contracts/cards';
+import AppPage from '../../components/AppPage.vue';
+import CardImageFrame from '../../components/CardImageFrame.vue';
+import ConsolePanel from '../../components/ConsolePanel.vue';
 import CardListingTable from './CardListingTable.vue';
 import { getCardDetails } from './useCardDetails';
 
@@ -79,12 +82,9 @@ watch(() => props.cardId, loadCard);
   <p v-if="isLoading" class="muted">Loading card details...</p>
   <p v-else-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-  <article v-else-if="card" class="card-page">
-    <section class="hero-card">
-      <div class="image-frame">
-        <img v-if="card.imageUrl" :src="card.imageUrl" :alt="card.name" />
-        <div v-else class="image-placeholder">No image</div>
-      </div>
+  <AppPage v-else-if="card" size="narrow">
+    <ConsolePanel variant="hero">
+      <CardImageFrame class="hero-image" :image-url="card.imageUrl" :alt="card.name" variant="hero" />
 
       <div class="card-summary">
         <div class="summary-readout">
@@ -97,97 +97,16 @@ watch(() => props.cardId, loadCard);
           <p v-if="cardNameParts.subtitle" class="card-subtitle">{{ cardNameParts.subtitle }}</p>
         </div>
       </div>
-    </section>
+    </ConsolePanel>
 
     <CardListingTable :listings="card.listings" />
-  </article>
+  </AppPage>
 </template>
 
 <style scoped>
-.card-page {
-  display: grid;
-  gap: 12px;
-  margin: 0 auto;
-  max-width: 1040px;
-}
-
-.hero-card {
-  align-items: start;
-  background:
-    radial-gradient(circle at 18% 0, rgba(14, 165, 233, 0.2), transparent 34%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.82));
-  border: 1px solid rgba(125, 211, 252, 0.24);
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.86) inset,
-    0 18px 80px rgba(0, 0, 0, 0.26),
-    0 0 42px rgba(14, 165, 233, 0.08);
-  clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
-  display: grid;
-  gap: clamp(10px, 3vw, 10px);
-  grid-template-columns: minmax(280px, 420px) 1fr;
-  overflow: hidden;
-  padding: clamp(10px, 1.8vw, 0px) clamp(14px, 2.5vw, 24px) clamp(14px, 2.5vw, 24px);
-  position: relative;
-}
-
-.hero-card::before,
-.hero-card::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-.hero-card::before {
-  inset: 0;
-  background:
-    linear-gradient(rgba(125, 211, 252, 0.04) 50%, transparent 50%) 0 0 / 100% 6px,
-    linear-gradient(90deg, rgba(125, 211, 252, 0.08), transparent 24%, transparent 80%, rgba(251, 191, 36, 0.08));
-  mix-blend-mode: screen;
-  opacity: 0.36;
-}
-
-.hero-card::after {
-  border-bottom: 2px solid rgba(251, 191, 36, 0.74);
-  border-left: 2px solid rgba(251, 191, 36, 0.74);
-  bottom: 10px;
-  height: 18px;
-  left: 10px;
-  width: 18px;
-}
-
-.image-frame,
 .card-summary {
   position: relative;
   z-index: 1;
-}
-
-.image-frame {
-  aspect-ratio: 1;
-  background:
-    radial-gradient(circle at 50% 20%, rgba(148, 163, 184, 0.18), transparent 52%),
-    rgba(2, 6, 23, 0.72);
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  box-sizing: border-box;
-  box-shadow: 0 0 34px rgba(15, 23, 42, 0.76) inset;
-  clip-path: polygon(0 14px, 14px 0, 100% 0, 100% 100%, 0 100%);
-  display: grid;
-  overflow: hidden;
-  padding: 8px;
-  place-items: center;
-}
-
-.image-frame img {
-  display: block;
-  max-height: 100%;
-  max-width: 100%;
-  object-fit: contain;
-}
-
-.image-placeholder {
-  color: #94a3b8;
-}
-
-.card-summary {
   align-self: start;
   min-height: 220px;
   padding: clamp(12px, 2vw, 18px) clamp(8px, 2vw, 18px);
@@ -301,11 +220,7 @@ watch(() => props.cardId, loadCard);
 }
 
 @media (max-width: 800px) {
-  .hero-card {
-    grid-template-columns: 1fr;
-  }
-
-  .image-frame {
+  .hero-image {
     max-width: 410px;
     width: 100%;
   }
