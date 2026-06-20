@@ -1,5 +1,5 @@
 <template>
-  <div class="app-shell">
+  <div class="app-shell" spellcheck="false">
     <header class="site-header">
       <RouterLink to="/cards" class="brand">SWU Singles NZ</RouterLink>
       <nav class="site-nav" aria-label="Primary navigation">
