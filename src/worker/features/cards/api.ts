@@ -10,6 +10,7 @@ import { NotFoundError } from '../../shared/errors/NotFoundError';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
 import { createAdapterRegistry } from '../sellerSync/calicoKeep';
 import type { Seller, SellerAdapter } from '../sellerSync/model';
+import type { Card } from './model';
 import {
   getCardById,
   listActiveListingsByCardId,
@@ -22,6 +23,12 @@ const maxBulkSearchNames = 150;
 
 type BulkSearchListing = Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number] & {
   requestedQuantity: number;
+};
+
+type RequestedCard = {
+  normalizedName: string;
+  originalName: string;
+  quantity: number;
 };
 
 export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Response> {
@@ -96,13 +103,15 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
     throw new Error('Too many card names');
   }
 
-  const cards = await listCardsByExactNormalizedNames(db, names.map(name => name.normalizedName));
-  const matchedNormalizedNames = new Set(cards.map(card => normalizeCardName(card.name)));
+  const matchedCards = await listCardsByExactNormalizedNames(db, names.map(name => name.normalizedName));
+  const matchedNormalizedNames = new Set(matchedCards.map(card => normalizeCardName(card.name)));
+  const matchedListings = await listActiveListingsByCardIds(db, matchedCards.map(card => card.id));
+  const cards = selectRepresentativeCards(names, matchedCards, matchedListings);
   const requestedQuantityByCardId = new Map(
     cards.map(card => [card.id, names.find(name => name.normalizedName === normalizeCardName(card.name))?.quantity ?? 1])
   );
   const allocation = allocateListings(
-    await listActiveListingsByCardIds(db, cards.map(card => card.id)),
+    matchedListings.filter(listing => requestedQuantityByCardId.has(listing.cardId)),
     requestedQuantityByCardId
   );
   const adapters = createAdapterRegistry();
@@ -154,11 +163,55 @@ function compareListingsForAllocation(
     || left.sellerName.localeCompare(right.sellerName);
 }
 
-function normalizeRequestedCards(cards: BulkCardSearchRequestDto['cards']): Array<{
-  normalizedName: string;
-  originalName: string;
-  quantity: number;
-}> {
+function selectRepresentativeCards(
+  requestedCards: RequestedCard[],
+  matchedCards: Card[],
+  listings: Awaited<ReturnType<typeof listActiveListingsByCardIds>>
+): Card[] {
+  const cheapestListingByCardId = new Map<string, Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number]>();
+
+  for (const listing of listings) {
+    const current = cheapestListingByCardId.get(listing.cardId);
+
+    if (!current || listing.priceNzd < current.priceNzd) {
+      cheapestListingByCardId.set(listing.cardId, listing);
+    }
+  }
+
+  return requestedCards.flatMap(requestedCard => {
+    const variants = matchedCards.filter(card => normalizeCardName(card.name) === requestedCard.normalizedName);
+    if (variants.length === 0) {
+      return [];
+    }
+
+    return variants
+      .sort((left, right) => compareCardVariants(left, right, cheapestListingByCardId))
+      .slice(0, 1);
+  });
+}
+
+function compareCardVariants(
+  left: Card,
+  right: Card,
+  cheapestListingByCardId: Map<string, Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number]>
+): number {
+  const leftListing = cheapestListingByCardId.get(left.id);
+  const rightListing = cheapestListingByCardId.get(right.id);
+
+  if (leftListing && rightListing) {
+    return leftListing.priceNzd - rightListing.priceNzd
+      || left.setCode.localeCompare(right.setCode)
+      || left.collectorNumber - right.collectorNumber;
+  }
+
+  if (leftListing) return -1;
+  if (rightListing) return 1;
+
+  return left.setCode.localeCompare(right.setCode)
+    || left.collectorNumber - right.collectorNumber;
+}
+
+function normalizeRequestedCards(cards: BulkCardSearchRequestDto['cards']): RequestedCard[] {
   const names = new Map<string, { normalizedName: string; originalName: string; quantity: number }>();
 
   for (const card of cards) {
