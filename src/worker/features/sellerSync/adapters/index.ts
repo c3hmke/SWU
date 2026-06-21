@@ -2,6 +2,7 @@ import type { SellerAdapter } from '../model';
 import { badgersSettNzAdapter } from './badgersSettNz';
 import { beaDndGamesAdapter } from './beaDndGames';
 import { CalicoKeepStorepassAdapter } from './calicoKeep';
+import { fetchMarketplaceAdapter } from './fetchMarketplace';
 import { goblinGamesAdapter } from './goblinGames';
 import { ironKnightGamingAdapter } from './ironKnightGaming';
 import { RogueOpsAdapter } from './rogueOps';
@@ -19,7 +20,8 @@ export function createAdapterRegistry(): Map<string, SellerAdapter> {
     badgersSettNzAdapter,
     beaDndGamesAdapter,
     goblinGamesAdapter,
-    ironKnightGamingAdapter
+    ironKnightGamingAdapter,
+    fetchMarketplaceAdapter
   ];
 
   return new Map<string, SellerAdapter>(adapters.map(adapter => [adapter.key, adapter]));

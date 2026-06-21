@@ -26,6 +26,12 @@ type ListingRow = {
   price_nzd: number;
   quantity: number;
   product_url: string;
+  marketplace_seller_name: string | null;
+  marketplace_seller_profile_name: string | null;
+  marketplace_seller_location: string | null;
+  marketplace_seller_rating: number | null;
+  marketplace_is_store: number | null;
+  marketplace_allow_pickups: number | null;
   last_seen_at: string;
 };
 
@@ -100,7 +106,10 @@ export async function listActiveListingsByCardId(db: D1Database, cardId: string)
   const result = await db
     .prepare(
       `select l.id, l.seller_id, s.name as seller_name, s.slug as seller_slug,
-              l.condition, l.price_nzd, l.quantity, l.product_url, l.last_seen_at
+              l.condition, l.price_nzd, l.quantity, l.product_url,
+              l.marketplace_seller_name, l.marketplace_seller_profile_name, l.marketplace_seller_location,
+              l.marketplace_seller_rating, l.marketplace_is_store, l.marketplace_allow_pickups,
+              l.last_seen_at
        from listings l
        inner join sellers s on s.id = l.seller_id
        where l.card_id = ?1
@@ -123,7 +132,10 @@ export async function listActiveListingsByCardIds(db: D1Database, cardIds: strin
     .prepare(
       `select l.id, l.external_id, l.seller_id, s.name as seller_name, s.slug as seller_slug,
               s.adapter_key as seller_adapter_key, s.website_url as seller_website_url,
-              l.condition, l.price_nzd, l.quantity, l.product_url, l.last_seen_at,
+              l.condition, l.price_nzd, l.quantity, l.product_url,
+              l.marketplace_seller_name, l.marketplace_seller_profile_name, l.marketplace_seller_location,
+              l.marketplace_seller_rating, l.marketplace_is_store, l.marketplace_allow_pickups,
+              l.last_seen_at,
               c.id as card_id, c.name as card_name, c.image_url as card_image_url
        from listings l
        inner join sellers s on s.id = l.seller_id
@@ -168,6 +180,12 @@ function mapListing(row: ListingRow): CardListing {
     priceNzd: row.price_nzd,
     quantity: row.quantity,
     productUrl: row.product_url,
+    marketplaceSellerName: row.marketplace_seller_name,
+    marketplaceSellerProfileName: row.marketplace_seller_profile_name,
+    marketplaceSellerLocation: row.marketplace_seller_location,
+    marketplaceSellerRating: row.marketplace_seller_rating,
+    marketplaceIsStore: row.marketplace_is_store === null ? null : row.marketplace_is_store === 1,
+    marketplaceAllowPickups: row.marketplace_allow_pickups === null ? null : row.marketplace_allow_pickups === 1,
     lastSeenAt: row.last_seen_at
   };
 }

@@ -14,6 +14,7 @@ import ConsolePanel from '../../components/ConsolePanel.vue';
 import ExternalIconLink from '../../components/ExternalIconLink.vue';
 import ListingRow from '../../components/ListingRow.vue';
 import ListingStats from '../../components/ListingStats.vue';
+import MarketplaceSellerMeta from '../../components/MarketplaceSellerMeta.vue';
 import NameChip from '../../components/NameChip.vue';
 import { bulkSearchCards } from './useBulkCardSearch';
 
@@ -217,7 +218,17 @@ function clearInput() {
             <ListingRow v-for="listing in seller.listings" :key="listing.id" variant="bulk">
               <RouterLink class="card-link" :to="`/cards/${listing.cardId}`">
                 <CardImageFrame :image-url="listing.cardImageUrl" :alt="listing.cardName" variant="mini" />
-                <strong>{{ listing.cardName }}</strong>
+                <div class="card-copy">
+                  <strong>{{ listing.cardName }}</strong>
+                  <MarketplaceSellerMeta
+                    :source-name="listing.sellerName"
+                    :seller-name="listing.marketplaceSellerName"
+                    :seller-location="listing.marketplaceSellerLocation"
+                    :seller-rating="listing.marketplaceSellerRating"
+                    :is-store="listing.marketplaceIsStore"
+                    :allow-pickups="listing.marketplaceAllowPickups"
+                  />
+                </div>
               </RouterLink>
 
               <ListingStats
@@ -416,7 +427,12 @@ textarea:focus {
   text-decoration: none;
 }
 
-.card-link strong {
+.card-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.card-copy strong {
   color: #f8fafc;
 }
 

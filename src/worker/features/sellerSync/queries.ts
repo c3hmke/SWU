@@ -62,14 +62,24 @@ export async function upsertMatchedListings(
   const statements = listings.map(listing =>
     db
       .prepare(
-        `insert into listings (id, seller_id, external_id, card_id, condition, price_nzd, quantity, product_url, last_seen_at)
-         values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+        `insert into listings (
+           id, seller_id, external_id, card_id, condition, price_nzd, quantity, product_url,
+           marketplace_seller_name, marketplace_seller_profile_name, marketplace_seller_location,
+           marketplace_seller_rating, marketplace_is_store, marketplace_allow_pickups, last_seen_at
+         )
+         values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
          on conflict(seller_id, external_id) do update set
            card_id = excluded.card_id,
            condition = excluded.condition,
            price_nzd = excluded.price_nzd,
            quantity = excluded.quantity,
            product_url = excluded.product_url,
+           marketplace_seller_name = excluded.marketplace_seller_name,
+           marketplace_seller_profile_name = excluded.marketplace_seller_profile_name,
+           marketplace_seller_location = excluded.marketplace_seller_location,
+           marketplace_seller_rating = excluded.marketplace_seller_rating,
+           marketplace_is_store = excluded.marketplace_is_store,
+           marketplace_allow_pickups = excluded.marketplace_allow_pickups,
            last_seen_at = excluded.last_seen_at`
       )
       .bind(
@@ -81,6 +91,16 @@ export async function upsertMatchedListings(
         listing.priceNzd,
         listing.quantity,
         listing.productUrl,
+        listing.marketplaceSellerName ?? null,
+        listing.marketplaceSellerProfileName ?? null,
+        listing.marketplaceSellerLocation ?? null,
+        listing.marketplaceSellerRating ?? null,
+        listing.marketplaceIsStore === null || listing.marketplaceIsStore === undefined ? null : listing.marketplaceIsStore ? 1 : 0,
+        listing.marketplaceAllowPickups === null || listing.marketplaceAllowPickups === undefined
+          ? null
+          : listing.marketplaceAllowPickups
+            ? 1
+            : 0,
         seenAt
       )
   );

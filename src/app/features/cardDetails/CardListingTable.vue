@@ -5,6 +5,7 @@ import ConsolePanel from '../../components/ConsolePanel.vue';
 import ExternalIconLink from '../../components/ExternalIconLink.vue';
 import ListingRow from '../../components/ListingRow.vue';
 import ListingStats from '../../components/ListingStats.vue';
+import MarketplaceSellerMeta from '../../components/MarketplaceSellerMeta.vue';
 import { formatSeenAt } from '../../shared/formatters';
 
 defineProps<{
@@ -26,7 +27,17 @@ defineProps<{
       <ListingRow v-for="listing in listings" :key="listing.id">
         <div class="seller-cell">
           <ExternalIconLink :href="listing.productUrl" :label="`View ${listing.sellerName} listing`" />
-          <strong>{{ listing.sellerName }}</strong>
+          <div class="seller-copy">
+            <strong>{{ listing.sellerName }}</strong>
+            <MarketplaceSellerMeta
+              :source-name="listing.sellerName"
+              :seller-name="listing.marketplaceSellerName"
+              :seller-location="listing.marketplaceSellerLocation"
+              :seller-rating="listing.marketplaceSellerRating"
+              :is-store="listing.marketplaceIsStore"
+              :allow-pickups="listing.marketplaceAllowPickups"
+            />
+          </div>
         </div>
 
         <ListingStats :condition="listing.condition" :quantity="listing.quantity" :price-nzd="listing.priceNzd" />
@@ -82,7 +93,12 @@ h2 {
   grid-template-columns: auto 1fr;
 }
 
-.seller-cell strong {
+.seller-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.seller-copy strong {
   color: #f8fafc;
 }
 

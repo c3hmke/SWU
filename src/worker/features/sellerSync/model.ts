@@ -22,6 +22,12 @@ export type ExternalListing = {
   priceNzd: number;
   quantity: number;
   productUrl: string;
+  marketplaceSellerName?: string | null;
+  marketplaceSellerProfileName?: string | null;
+  marketplaceSellerLocation?: string | null;
+  marketplaceSellerRating?: number | null;
+  marketplaceIsStore?: boolean | null;
+  marketplaceAllowPickups?: boolean | null;
   raw: unknown;
 };
 

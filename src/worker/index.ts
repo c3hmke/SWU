@@ -42,7 +42,8 @@ export default {
       'badgers-sett-nz',
       'bea-dnd-games',
       'goblin-games',
-      'iron-knight-gaming'
+      'iron-knight-gaming',
+      'fetch-marketplace'
     ]) {
       try {
         await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
