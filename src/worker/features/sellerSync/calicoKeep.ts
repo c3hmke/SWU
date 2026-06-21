@@ -1,4 +1,5 @@
 import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from './model';
+import { BadgersSettNzAdapter } from './badgersSettNz';
 import { RogueOpsAdapter } from './rogueOps';
 import { SpellboundGamesAdapter } from './spellboundGames';
 import { TcgCollectorNzAdapter } from './tcgCollectorNz';
@@ -85,12 +86,14 @@ export function createAdapterRegistry(): Map<string, SellerAdapter> {
   const rogueOpsAdapter = new RogueOpsAdapter();
   const spellboundGamesAdapter = new SpellboundGamesAdapter();
   const tcgCollectorNzAdapter = new TcgCollectorNzAdapter();
+  const badgersSettNzAdapter = new BadgersSettNzAdapter();
 
   return new Map<string, SellerAdapter>([
     [calicoKeepAdapter.key, calicoKeepAdapter],
     [rogueOpsAdapter.key, rogueOpsAdapter],
     [spellboundGamesAdapter.key, spellboundGamesAdapter],
-    [tcgCollectorNzAdapter.key, tcgCollectorNzAdapter]
+    [tcgCollectorNzAdapter.key, tcgCollectorNzAdapter],
+    [badgersSettNzAdapter.key, badgersSettNzAdapter]
   ]);
 }
 
