@@ -13,6 +13,8 @@ type ShopifyCollectionAdapterConfig = {
   collectionHandle: string;
   productType: string;
   source: ShopifyCollectionSource;
+  mapProductName?: (product: ShopifyProduct) => string;
+  mapCondition?: (product: ShopifyProduct, variant: ShopifyVariant) => string | null;
   priceDivisor?: number;
   maxPages?: number;
   pageSize?: number;
@@ -22,6 +24,9 @@ type ShopifyProduct = {
   id: number;
   title: string;
   handle: string;
+  vendor?: string;
+  body_html?: string | null;
+  description?: string | null;
   type?: string;
   product_type?: string;
   variants: ShopifyVariant[];
@@ -30,6 +35,9 @@ type ShopifyProduct = {
 type ShopifyVariant = {
   id: number;
   title: string;
+  option1?: string | null;
+  option2?: string | null;
+  option3?: string | null;
   sku: string | null;
   available: boolean;
   price: string | number;
@@ -141,8 +149,8 @@ function mapProductsToListings(config: ShopifyCollectionAdapterConfig, products:
 
       listings.push({
         externalId: variant.id.toString(),
-        productName: product.title,
-        condition: variant.title === 'Default Title' ? null : variant.title,
+        productName: config.mapProductName ? config.mapProductName(product) : product.title,
+        condition: config.mapCondition ? config.mapCondition(product, variant) : defaultCondition(variant),
         priceNzd,
         quantity: 1,
         productUrl: `${config.baseUrl}/products/${product.handle}`,
@@ -152,6 +160,9 @@ function mapProductsToListings(config: ShopifyCollectionAdapterConfig, products:
           productType: getProductType(product),
           variantId: variant.id,
           variantTitle: variant.title,
+          option1: variant.option1,
+          option2: variant.option2,
+          option3: variant.option3,
           sku: variant.sku,
           available: variant.available
         }
@@ -240,6 +251,10 @@ function hasNextPage(html: string): boolean {
 
 function getProductType(product: ShopifyProduct): string | undefined {
   return product.product_type ?? product.type;
+}
+
+function defaultCondition(variant: ShopifyVariant): string | null {
+  return variant.title === 'Default Title' ? null : variant.title;
 }
 
 function parsePrice(price: string | number, divisor: number): number | null {

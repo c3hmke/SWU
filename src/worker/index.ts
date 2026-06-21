@@ -41,7 +41,8 @@ export default {
       'tcg-collector-nz',
       'badgers-sett-nz',
       'bea-dnd-games',
-      'goblin-games'
+      'goblin-games',
+      'iron-knight-gaming'
     ]) {
       try {
         await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
