@@ -3,6 +3,7 @@ import type {
   BulkCardSearchRequestDto,
   BulkCardSearchResponseDto,
   BulkCardSearchSellerCartDto,
+  CardListItemDto,
   CardDetailsDto
 } from '../../../shared/contracts/cards';
 import type { WorkerEnv } from '../../env';
@@ -37,7 +38,7 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const name = url.searchParams.get('name')?.trim() || null;
     const cards = await listCardsByChasePrice(env.DB, { name });
-    return createJsonResponse(cards, 200, request);
+    return createJsonResponse(cards.map(card => mapCardListItemDto(request, card)), 200, request);
   }
 
   if (url.pathname === '/api/cards/bulk-search' && request.method === 'POST') {
@@ -75,6 +76,19 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
     console.error(error);
     return createJsonResponse({ error: 'Internal server error' }, 500, request);
   }
+}
+
+function mapCardListItemDto(request: Request, card: Awaited<ReturnType<typeof listCardsByChasePrice>>[number]): CardListItemDto {
+  return {
+    ...card,
+    proxiedImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl) : null
+  };
+}
+
+function createProxiedImageUrl(request: Request, imageUrl: string): string {
+  const url = new URL('/api/card-images', request.url);
+  url.searchParams.set('url', imageUrl);
+  return url.toString();
 }
 
 async function getCardDetails(db: D1Database, cardId: string): Promise<CardDetailsDto> {

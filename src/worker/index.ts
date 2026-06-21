@@ -1,16 +1,21 @@
 import type { WorkerEnv } from './env';
 import { createJsonResponse, createOptionsResponse } from './shared/http/createJsonResponse';
 import { cardRoutes } from './features/cards/api';
+import { cardImageRoutes } from './features/cardImages/api';
 import { sellerSyncRoutes } from './features/sellerSync/api';
 import { createAdapterRegistry } from './features/sellerSync/adapters';
 import { syncSeller } from './features/sellerSync/syncSeller';
 
 export default {
-  async fetch(request: Request, env: WorkerEnv): Promise<Response> {
+  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
       return createOptionsResponse(request);
+    }
+
+    if (url.pathname === '/api/card-images') {
+      return cardImageRoutes(request, ctx);
     }
 
     if (url.pathname === '/api/cards' || url.pathname.startsWith('/api/cards/')) {

@@ -131,7 +131,7 @@ function adjustHighValuePage(delta: number) {
           :key="card.id"
           :to="`/cards/${card.id}`"
           :name="card.name"
-          :image-url="card.imageUrl"
+          :image-url="card.proxiedImageUrl ?? card.imageUrl"
           :price-nzd="card.lowestPriceNzd"
         />
       </div>

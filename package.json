@@ -15,7 +15,8 @@
     "worker:deploy": "wrangler deploy src/worker/index.ts",
     "db:migrate": "wrangler d1 migrations apply swu-singles-nz",
     "db:migrate:remote": "wrangler d1 migrations apply swu-singles-nz --remote",
-    "cards:import:official": "node scripts/import-card-set.mjs"
+    "cards:import:official": "node scripts/import-card-set.mjs",
+    "images:prewarm": "node scripts/prewarm-card-images.mjs"
   },
   
   "dependencies": {
