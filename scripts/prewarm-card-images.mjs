@@ -11,6 +11,7 @@ if (args.includes('--help') || args.includes('-h')) {
 const baseUrl = readStringOption('--base-url') ?? process.env.SWU_API_BASE_URL;
 const limit = readNumberOption('--limit', DEFAULT_LIMIT);
 const concurrency = readNumberOption('--concurrency', DEFAULT_CONCURRENCY);
+const syncApiToken = process.env.SYNC_API_TOKEN ?? null;
 
 main().catch(error => {
   console.error(error instanceof Error ? error.message : error);
@@ -36,7 +37,10 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(`Prewarming ${imageUrls.length} card images from ${normalizedBaseUrl} with concurrency ${concurrency}.`);
+  console.log(
+    `Prewarming ${imageUrls.length} card images from ${normalizedBaseUrl} with concurrency ${concurrency}` +
+    `${syncApiToken ? ' using authorized requests' : ''}.`
+  );
 
   const results = await runWithConcurrency(imageUrls, concurrency, prewarmImage);
   const succeeded = results.filter(result => result.ok).length;
@@ -94,7 +98,9 @@ function createPrewarmImageUrl(baseUrl, card) {
 
 async function prewarmImage(url) {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: createPrewarmHeaders()
+    });
 
     if (!response.ok) {
       await response.body?.cancel();
@@ -106,6 +112,14 @@ async function prewarmImage(url) {
   } catch (error) {
     return { ok: false, url, error: error instanceof Error ? error.message : 'Unknown error' };
   }
+}
+
+function createPrewarmHeaders() {
+  return syncApiToken
+    ? {
+        authorization: `Bearer ${syncApiToken}`
+      }
+    : undefined;
 }
 
 async function runWithConcurrency(items, concurrency, worker) {
@@ -157,7 +171,9 @@ function printUsage() {
   console.log(`Usage: npm run images:prewarm -- --base-url <url> [--limit 144] [--concurrency 6]
 
 Examples:
-  npm run images:prewarm -- --base-url https://swu-singles-nz.pages.dev
-  SWU_API_BASE_URL=https://swu-singles-nz.pages.dev npm run images:prewarm
+  npm run images:prewarm -- --base-url https://<worker-url>
+  SWU_API_BASE_URL=https://<worker-url> npm run images:prewarm
+
+Set SYNC_API_TOKEN in your shell first to bypass public image rate limits during prewarm.
 `);
 }

@@ -3,6 +3,7 @@ import { createJsonResponse } from '../../shared/http/createJsonResponse';
 const allowedImageHosts = new Set(['cdn.starwarsunlimited.com']);
 const browserCacheSeconds = 60 * 60 * 24;
 const edgeCacheSeconds = 60 * 60 * 24 * 30;
+const imageCacheOrigin = 'https://card-image-cache.swu-singles-nz.internal';
 
 export async function cardImageRoutes(request: Request, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
@@ -16,12 +17,44 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
     return createJsonResponse({ error: 'Invalid image URL' }, 400, request);
   }
 
-  const cacheKey = createCacheKey(request, imageUrl);
+  const cacheKey = createCacheKey(imageUrl);
   const cachedResponse = await caches.default.match(cacheKey);
   if (cachedResponse) {
     return cachedResponse;
   }
 
+  const response = await fetchImageResponse(imageUrl);
+  if (!response) {
+    return createJsonResponse({ error: 'Image unavailable' }, 502, request);
+  }
+
+  ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+
+  return response;
+}
+
+export async function prewarmCardImage(imageUrlValue: string): Promise<'cached' | 'warmed' | 'skipped' | 'failed'> {
+  const imageUrl = parseAllowedImageUrl(imageUrlValue);
+  if (!imageUrl) {
+    return 'skipped';
+  }
+
+  const cacheKey = createCacheKey(imageUrl);
+  const cachedResponse = await caches.default.match(cacheKey);
+  if (cachedResponse) {
+    return 'cached';
+  }
+
+  const response = await fetchImageResponse(imageUrl);
+  if (!response) {
+    return 'failed';
+  }
+
+  await caches.default.put(cacheKey, response);
+  return 'warmed';
+}
+
+async function fetchImageResponse(imageUrl: URL): Promise<Response | null> {
   const upstreamResponse = await fetch(imageUrl.toString(), {
     headers: {
       accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
@@ -33,21 +66,19 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
   });
 
   if (!upstreamResponse.ok) {
-    return createJsonResponse({ error: 'Image unavailable' }, upstreamResponse.status, request);
+    return null;
   }
 
   const contentType = upstreamResponse.headers.get('content-type') ?? '';
   if (!contentType.toLowerCase().startsWith('image/')) {
-    return createJsonResponse({ error: 'Invalid image response' }, 502, request);
+    await upstreamResponse.body?.cancel();
+    return null;
   }
 
-  const response = new Response(upstreamResponse.body, {
+  return new Response(upstreamResponse.body, {
     status: upstreamResponse.status,
     headers: createImageHeaders(contentType)
   });
-  ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
-
-  return response;
 }
 
 function parseAllowedImageUrl(value: string | null): URL | null {
@@ -69,8 +100,8 @@ function parseAllowedImageUrl(value: string | null): URL | null {
   return url;
 }
 
-function createCacheKey(request: Request, imageUrl: URL): Request {
-  const cacheUrl = new URL('/api/card-images', request.url);
+function createCacheKey(imageUrl: URL): Request {
+  const cacheUrl = new URL('/api/card-images', imageCacheOrigin);
   cacheUrl.searchParams.set('url', imageUrl.toString());
 
   return new Request(cacheUrl.toString(), { method: 'GET' });
