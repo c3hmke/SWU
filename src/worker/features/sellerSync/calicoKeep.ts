@@ -1,6 +1,7 @@
 import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from './model';
 import { RogueOpsAdapter } from './rogueOps';
 import { SpellboundGamesAdapter } from './spellboundGames';
+import { TcgCollectorNzAdapter } from './tcgCollectorNz';
 
 const BATCH_SIZE = 200;
 const STOREPASS_STORE_ID = 'MInamaYs3W';
@@ -83,11 +84,13 @@ export function createAdapterRegistry(): Map<string, SellerAdapter> {
   const calicoKeepAdapter = new CalicoKeepStorepassAdapter();
   const rogueOpsAdapter = new RogueOpsAdapter();
   const spellboundGamesAdapter = new SpellboundGamesAdapter();
+  const tcgCollectorNzAdapter = new TcgCollectorNzAdapter();
 
   return new Map<string, SellerAdapter>([
     [calicoKeepAdapter.key, calicoKeepAdapter],
     [rogueOpsAdapter.key, rogueOpsAdapter],
-    [spellboundGamesAdapter.key, spellboundGamesAdapter]
+    [spellboundGamesAdapter.key, spellboundGamesAdapter],
+    [tcgCollectorNzAdapter.key, tcgCollectorNzAdapter]
   ]);
 }
 

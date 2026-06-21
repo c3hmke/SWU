@@ -34,7 +34,7 @@ export default {
   },
 
   async scheduled(_controller: ScheduledController, env: WorkerEnv, _ctx: ExecutionContext): Promise<void> {
-    for (const sellerSlug of ['calico-keep', 'rogue-ops', 'spellbound-games']) {
+    for (const sellerSlug of ['calico-keep', 'rogue-ops', 'spellbound-games', 'tcg-collector-nz']) {
       try {
         await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
       } catch (error) {
