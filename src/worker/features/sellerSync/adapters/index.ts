@@ -1,5 +1,6 @@
 import type { SellerAdapter } from '../model';
 import { badgersSettNzAdapter } from './badgersSettNz';
+import { beaDndGamesAdapter } from './beaDndGames';
 import { CalicoKeepStorepassAdapter } from './calicoKeep';
 import { RogueOpsAdapter } from './rogueOps';
 import { spellboundGamesAdapter } from './spellboundGames';
@@ -13,7 +14,8 @@ export function createAdapterRegistry(): Map<string, SellerAdapter> {
     rogueOpsAdapter,
     spellboundGamesAdapter,
     tcgCollectorNzAdapter,
-    badgersSettNzAdapter
+    badgersSettNzAdapter,
+    beaDndGamesAdapter
   ];
 
   return new Map<string, SellerAdapter>(adapters.map(adapter => [adapter.key, adapter]));
