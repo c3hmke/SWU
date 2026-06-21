@@ -15,8 +15,20 @@ const cards = ref<CardListItemDto[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
-const visibleCards = computed(() => (nameFilter.value.trim() ? cards.value : cards.value.slice(0, 12)));
+const highValuePageCount = 12;
+const highValuePageSize = 12;
+const highValuePage = ref(1);
+const hasNameFilter = computed(() => Boolean(nameFilter.value.trim()));
+const visibleCards = computed(() => {
+  if (hasNameFilter.value) {
+    return cards.value;
+  }
+
+  const start = (highValuePage.value - 1) * highValuePageSize;
+  return cards.value.slice(start, start + highValuePageSize);
+});
 const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'High value signals'));
+const highValuePages = computed(() => Array.from({ length: highValuePageCount }, (_, index) => index + 1));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 async function loadCards() {
@@ -39,6 +51,8 @@ watch(nameFilter, () => {
     clearTimeout(searchTimeout);
   }
 
+  highValuePage.value = 1;
+
   searchTimeout = setTimeout(() => {
     const trimmedName = nameFilter.value.trim();
     void router.replace({
@@ -55,6 +69,14 @@ watch(nameFilter, () => {
 function clearSearch() {
   nameFilter.value = '';
 }
+
+function selectHighValuePage(page: number) {
+  highValuePage.value = page;
+}
+
+function adjustHighValuePage(delta: number) {
+  highValuePage.value = Math.min(highValuePageCount, Math.max(1, highValuePage.value + delta));
+}
 </script>
 
 <template>
@@ -70,7 +92,34 @@ function clearSearch() {
     </ConsolePanel>
 
     <ConsolePanel aria-live="polite">
-      <ConsoleHeader :label="resultsLabel" :meta="`${visibleCards.length.toString().padStart(2, '0')} targets`" />
+      <ConsoleHeader :label="resultsLabel" :meta="hasNameFilter ? `${visibleCards.length.toString().padStart(2, '0')} targets` : undefined">
+        <div class="page-controls" aria-label="High value signal pages">
+          <button
+            type="button"
+            class="page-arrow"
+            :disabled="highValuePage === 1"
+            aria-label="Show previous high value page"
+            @click="adjustHighValuePage(-1)"
+          >‹</button>
+          <button
+            v-for="page in highValuePages"
+            :key="page"
+            type="button"
+            class="page-dot"
+            :class="{ active: page === highValuePage }"
+            :aria-label="`Show high value page ${page}`"
+            :aria-current="page === highValuePage ? 'page' : undefined"
+            @click="selectHighValuePage(page)"
+          ></button>
+          <button
+            type="button"
+            class="page-arrow"
+            :disabled="highValuePage === highValuePageCount"
+            aria-label="Show next high value page"
+            @click="adjustHighValuePage(1)"
+          >›</button>
+        </div>
+      </ConsoleHeader>
 
       <p v-if="isLoading" class="muted screen-message">Loading cards...</p>
       <p v-else-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
@@ -159,6 +208,93 @@ function clearSearch() {
   margin: 0;
 }
 
+.page-controls {
+  align-items: center;
+  display: flex;
+  gap: 0;
+}
+
+.page-dot {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  width: 24px;
+}
+
+.page-dot::before {
+  border: 1px solid rgba(125, 211, 252, 0.46);
+  content: '';
+  display: block;
+  height: 12px;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    filter 140ms ease,
+    box-shadow 140ms ease;
+  width: 12px;
+}
+
+.page-arrow {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #bae6fd;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  height: 24px;
+  justify-content: center;
+  line-height: 12px;
+  padding: 0;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    opacity 140ms ease;
+  width: 24px;
+}
+
+.page-dot:not(.active):hover::before,
+.page-dot:not(.active):focus-visible::before {
+  border-color: #fbbf24;
+  box-shadow:
+    0 0 10px rgba(251, 191, 36, 0.72),
+    0 0 20px rgba(251, 191, 36, 0.28);
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.82));
+}
+
+.page-dot:focus-visible {
+  outline: none;
+}
+
+.page-arrow:hover:not(:disabled),
+.page-arrow:focus-visible {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.82));
+  outline: none;
+}
+
+.page-arrow:disabled {
+  opacity: 0.32;
+}
+
+.page-dot.active::before {
+  background: transparent;
+  border-color: #fbbf24;
+  box-shadow:
+    0 0 10px rgba(251, 191, 36, 0.72),
+    0 0 20px rgba(251, 191, 36, 0.28);
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.82));
+}
+
 .card-grid {
   display: grid;
   gap: clamp(14px, 1.8vw, 20px);
@@ -166,6 +302,10 @@ function clearSearch() {
 }
 
 @media (max-width: 520px) {
+  .page-controls {
+    flex-wrap: wrap;
+  }
+
   .card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
