@@ -1,7 +1,7 @@
 import type { WorkerEnv } from '../../env';
 import { NotFoundError } from '../../shared/errors/NotFoundError';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
-import { createAdapterRegistry } from './calicoKeep';
+import { createAdapterRegistry } from './adapters';
 import { syncSeller } from './syncSeller';
 
 export async function sellerSyncRoutes(request: Request, env: WorkerEnv): Promise<Response> {

@@ -1,4 +1,4 @@
-import type { ExternalListing, Seller, SellerAdapter, SyncCard } from './model';
+import type { ExternalListing, Seller, SellerAdapter, SyncCard } from '../model';
 
 const BASE_URL = 'https://rogueops.nz';
 const MAX_PAGES = 50;

@@ -8,7 +8,7 @@ import type {
 import type { WorkerEnv } from '../../env';
 import { NotFoundError } from '../../shared/errors/NotFoundError';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
-import { createAdapterRegistry } from '../sellerSync/calicoKeep';
+import { createAdapterRegistry } from '../sellerSync/adapters';
 import type { Seller, SellerAdapter } from '../sellerSync/model';
 import type { Card } from './model';
 import {

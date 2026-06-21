@@ -2,7 +2,7 @@ import type { WorkerEnv } from './env';
 import { createJsonResponse, createOptionsResponse } from './shared/http/createJsonResponse';
 import { cardRoutes } from './features/cards/api';
 import { sellerSyncRoutes } from './features/sellerSync/api';
-import { createAdapterRegistry } from './features/sellerSync/calicoKeep';
+import { createAdapterRegistry } from './features/sellerSync/adapters';
 import { syncSeller } from './features/sellerSync/syncSeller';
 
 export default {
