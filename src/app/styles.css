@@ -65,14 +65,31 @@ a {
   display: flex;
   gap: 18px;
   justify-content: space-between;
-  padding: 18px clamp(16px, 4vw, 48px);
+  padding: 14px clamp(16px, 4vw, 48px);
 }
 
 .brand {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  display: grid;
+  gap: 1px;
+  line-height: 1;
+  min-width: max-content;
   text-decoration: none;
+}
+
+.brand-primary {
+  color: #f8fafc;
+  font-size: clamp(0.92rem, 1.8vw, 1.22rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-secondary {
+  color: #fbbf24;
+  font-size: clamp(0.62rem, 1.1vw, 0.72rem);
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 
 .site-nav {
@@ -99,7 +116,7 @@ a {
 
 main {
   position: relative;
-  padding: clamp(20px, 5vw, 28px);
+  padding: 18px clamp(16px, 5vw, 28px);
 }
 
 @media (max-width: 620px) {
