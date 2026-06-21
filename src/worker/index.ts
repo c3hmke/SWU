@@ -40,7 +40,8 @@ export default {
       'spellbound-games',
       'tcg-collector-nz',
       'badgers-sett-nz',
-      'bea-dnd-games'
+      'bea-dnd-games',
+      'goblin-games'
     ]) {
       try {
         await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
