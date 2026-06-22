@@ -13,10 +13,17 @@
 
     <aside class="sponsor-rail" aria-label="Sponsor message">
       <a class="sponsor-card" href="mailto:sponsor@swusingles.nz?subject=Sponsor%20SWU%20Singles%20NZ">
-        <span class="sponsor-eyebrow">Sponsor</span>
-        <span class="sponsor-title">Support SWU Singles NZ</span>
-        <span class="sponsor-copy">This quiet spot helps cover hosting and data costs.</span>
-        <span class="sponsor-action">Interested?</span>
+        <span class="sponsor-controls" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span class="sponsor-screen">
+          <span class="sponsor-eyebrow">Sponsor</span>
+          <span class="sponsor-title">Support SWU Singles NZ</span>
+          <span class="sponsor-copy">This quiet spot helps cover hosting and data costs.</span>
+          <span class="sponsor-action">Interested?</span>
+        </span>
       </a>
     </aside>
 

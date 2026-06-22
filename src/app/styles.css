@@ -124,38 +124,169 @@ main {
 }
 
 .sponsor-card {
+  color: inherit;
+  display: block;
   text-decoration: none;
 }
 
 @media (min-width: 1180px) {
   .sponsor-rail {
     display: block;
-    left: 18px;
+    left: 12px;
     position: fixed;
-    top: 92px;
-    width: 148px;
+    top: 78px;
+    width: 200px;
     z-index: 1;
   }
 
   .sponsor-card {
-    background: rgba(15, 23, 42, 0.58);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    color: #cbd5e1;
+    background:
+      linear-gradient(108deg, rgba(255, 255, 255, 0.14), transparent 18% 72%, rgba(0, 0, 0, 0.34)),
+      linear-gradient(180deg, #59616b, #343a42 54%, #1f242b);
+    border: 1px solid rgba(203, 213, 225, 0.22);
+    border-radius: 13px 7px 14px 10px;
+    box-shadow:
+      0 18px 34px rgba(0, 0, 0, 0.28),
+      inset 0 0 0 2px rgba(10, 14, 20, 0.34),
+      inset 7px 0 14px rgba(255, 255, 255, 0.08),
+      inset -10px 0 18px rgba(0, 0, 0, 0.24);
+    color: #dbeafe;
     display: grid;
-    gap: 10px;
-    min-height: 360px;
-    padding: 12px;
-    transition: border-color 160ms ease, background 160ms ease;
+    gap: 6px;
+    grid-template-columns: 22px 1fr;
+    min-height: 334px;
+    overflow: hidden;
+    padding: 9px 8px 10px 7px;
+    position: relative;
+    transition: box-shadow 160ms ease, transform 160ms ease;
   }
 
   .sponsor-card:hover,
   .sponsor-card:focus-visible {
-    background: rgba(15, 23, 42, 0.82);
-    border-color: rgba(251, 191, 36, 0.34);
+    box-shadow:
+      0 20px 38px rgba(0, 0, 0, 0.34),
+      0 0 26px rgba(59, 130, 246, 0.14),
+      inset 0 0 0 2px rgba(10, 14, 20, 0.34),
+      inset 7px 0 14px rgba(255, 255, 255, 0.08),
+      inset -10px 0 18px rgba(0, 0, 0, 0.24);
+    transform: translateY(-1px);
+  }
+
+  .sponsor-card::before {
+    background:
+      linear-gradient(92deg, transparent 0 17%, rgba(10, 14, 20, 0.34) 18% 19%, transparent 20% 100%),
+      radial-gradient(circle at 14% 11%, rgba(2, 6, 23, 0.44) 0 2px, transparent 2.8px),
+      radial-gradient(circle at 88% 94%, rgba(2, 6, 23, 0.42) 0 2px, transparent 2.8px),
+      linear-gradient(142deg, transparent 0 34%, rgba(255, 255, 255, 0.1) 35%, transparent 37% 100%);
+    content: '';
+    inset: 0;
+    opacity: 0.72;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .sponsor-card::after {
+    background: linear-gradient(90deg, rgba(53, 47, 41, 0.48), rgba(255, 255, 255, 0.28), rgba(53, 47, 41, 0.48));
+    border-radius: 999px;
+    bottom: 8px;
+    content: '';
+    height: 5px;
+    left: 13px;
+    pointer-events: none;
+    position: absolute;
+    width: 36px;
+  }
+
+  .sponsor-controls {
+    align-content: start;
+    display: grid;
+    gap: 8px;
+    padding-top: 7px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .sponsor-controls::before {
+    background:
+      radial-gradient(circle at 50% 38%, #f97316 0 5px, #9a3412 6px 9px, rgba(42, 35, 30, 0.74) 10px 12px, transparent 13px),
+      linear-gradient(180deg, #fdba74, #c2410c);
+    border: 1px solid rgba(124, 45, 18, 0.64);
+    border-radius: 8px 8px 5px 5px;
+    box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.24), 0 2px 4px rgba(0, 0, 0, 0.28);
+    content: '';
+    height: 28px;
+  }
+
+  .sponsor-controls span {
+    background: linear-gradient(180deg, #60a5fa, #1d4ed8);
+    border: 1px solid rgba(30, 64, 175, 0.68);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.32), 0 2px 3px rgba(0, 0, 0, 0.22);
+    height: 14px;
+  }
+
+  .sponsor-controls span:nth-child(1) {
+    background: linear-gradient(180deg, #ef4444, #7f1d1d);
+    border-color: rgba(69, 10, 10, 0.62);
+  }
+
+  .sponsor-controls span:nth-child(2) {
+    background: linear-gradient(180deg, #ef4444, #7f1d1d);
+    border-color: rgba(69, 10, 10, 0.62);
+    height: 14px;
+    margin-top: 0;
+  }
+
+  .sponsor-controls span:nth-child(3) {
+    background: linear-gradient(180deg, #ef4444, #7f1d1d);
+    border-color: rgba(69, 10, 10, 0.62);
+    height: 14px;
+  }
+
+  .sponsor-screen {
+    background:
+      linear-gradient(rgba(147, 197, 253, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(147, 197, 253, 0.08) 1px, transparent 1px),
+      radial-gradient(circle at 22% 24%, rgba(37, 99, 235, 0.34), transparent 26%),
+      radial-gradient(circle at 84% 12%, rgba(244, 63, 94, 0.2), transparent 24%),
+      linear-gradient(180deg, #08111f, #050816);
+    background-size: 100% 9px, 9px 100%, auto, auto, auto;
+    border: 2px solid #1e293b;
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.18),
+      inset 0 0 0 1px rgba(96, 165, 250, 0.32),
+      inset 0 0 22px rgba(59, 130, 246, 0.24);
+    display: grid;
+    gap: 10px;
+    min-height: 296px;
+    overflow: hidden;
+    padding: 10px 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .sponsor-screen::before {
+    background:
+      linear-gradient(90deg, rgba(244, 63, 94, 0.82), transparent 42%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 36%);
+    content: '';
+    height: 2px;
+    left: 9px;
+    opacity: 0.78;
+    pointer-events: none;
+    position: absolute;
+    right: 9px;
+    top: 34px;
+  }
+
+  .sponsor-screen > span {
+    position: relative;
+    z-index: 1;
   }
 
   .sponsor-eyebrow {
-    color: #94a3b8;
+    color: #93c5fd;
     font-size: 0.58rem;
     font-weight: 900;
     letter-spacing: 0.18em;
@@ -163,17 +294,19 @@ main {
   }
 
   .sponsor-title {
-    align-self: end;
-    color: #e5e7eb;
-    font-size: 0.88rem;
+    color: #f8fafc;
+    font-size: 0.86rem;
     font-weight: 900;
     line-height: 1.15;
+    text-shadow: 0 0 12px rgba(96, 165, 250, 0.54);
   }
 
   .sponsor-copy {
-    color: #94a3b8;
+    border-left: 2px solid rgba(244, 63, 94, 0.58);
+    color: #bfdbfe;
     font-size: 0.74rem;
     line-height: 1.4;
+    padding-left: 8px;
   }
 
   .sponsor-action {
@@ -186,9 +319,9 @@ main {
   }
 }
 
-@media (min-width: 1180px) and (max-width: 1380px) {
+@media (min-width: 1180px) and (max-width: 1500px) {
   main {
-    padding-left: 184px;
+    padding-left: 232px;
   }
 }
 
