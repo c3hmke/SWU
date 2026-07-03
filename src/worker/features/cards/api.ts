@@ -85,13 +85,20 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
 function mapCardListItemDto(request: Request, card: Awaited<ReturnType<typeof listCardsByChasePrice>>[number]): CardListItemDto {
   return {
     ...card,
-    proxiedImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl) : null
+    proxiedImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl) : null,
+    thumbnailImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl, 'thumbnail') : null
   };
 }
 
-function createProxiedImageUrl(request: Request, imageUrl: string): string {
+function createProxiedImageUrl(request: Request, imageUrl: string, variant?: 'thumbnail'): string {
   const url = new URL('/api/card-images', request.url);
   url.searchParams.set('url', imageUrl);
+
+  if (variant) {
+    url.searchParams.set('variant', variant);
+    url.searchParams.set('width', '240');
+  }
+
   return url.toString();
 }
 
@@ -209,11 +216,9 @@ function selectRepresentativeCards(
   }
 
   return requestedCards.flatMap(requestedCard => {
-    const variants = matchedCards
+    return matchedCards
       .filter(card => normalizeCardName(card.name) === requestedCard.normalizedName && hasListingByCardId.has(card.id))
       .sort((left, right) => compareCardVariants(left, right, cheapestListingByCardId));
-    
-    return variants;
   });
 }
 

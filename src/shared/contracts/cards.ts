@@ -14,6 +14,7 @@ export type CardListItemDto = {
   name: string;
   imageUrl: string | null;
   proxiedImageUrl: string | null;
+  thumbnailImageUrl: string | null;
   lowestPriceNzd: number;
 };
 

@@ -129,12 +129,12 @@ function adjustHighValuePage(delta: number) {
   <AppPage>
     <ConsolePanel variant="control" aria-label="Card search controls">
       <ConsoleLabel>Market scanner</ConsoleLabel>
-      <label class="search-field">
+      <div class="search-field">
         <div class="search-control">
-          <input v-model="nameFilter" type="search" placeholder="Search by card name..." />
+          <input v-model="nameFilter" type="search" placeholder="Search by card name..." aria-label="Search by card name" />
           <button v-if="nameFilter" type="button" @click="clearSearch">⬡</button>
         </div>
-      </label>
+      </div>
     </ConsolePanel>
 
     <ConsolePanel aria-live="polite">
@@ -179,6 +179,7 @@ function adjustHighValuePage(delta: number) {
           :to="`/cards/${card.id}`"
           :name="card.name"
           :image-url="card.proxiedImageUrl ?? card.imageUrl"
+          :thumbnail-image-url="card.thumbnailImageUrl"
           :price-nzd="card.lowestPriceNzd"
         />
       </div>

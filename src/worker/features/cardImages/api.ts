@@ -4,6 +4,9 @@ const allowedImageHosts = new Set(['cdn.starwarsunlimited.com']);
 const browserCacheSeconds = 60 * 60 * 24;
 const edgeCacheSeconds = 60 * 60 * 24 * 30;
 const imageCacheOrigin = 'https://card-image-cache.swu-singles-nz.internal';
+const thumbnailWidth = 240;
+
+type ImageVariant = 'original' | 'thumbnail';
 
 export async function cardImageRoutes(request: Request, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
@@ -17,13 +20,17 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
     return createJsonResponse({ error: 'Invalid image URL' }, 400, request);
   }
 
-  const cacheKey = createCacheKey(imageUrl);
+  const variant = parseImageVariant(url.searchParams.get('variant'));
+  const width = parseThumbnailWidth(url.searchParams.get('width'));
+  const cacheKey = createCacheKey(imageUrl, variant, width);
   const cachedResponse = await caches.default.match(cacheKey);
   if (cachedResponse) {
     return cachedResponse;
   }
 
-  const response = await fetchImageResponse(imageUrl);
+  const response =
+    await fetchImageResponse(imageUrl, variant, width) ??
+    (variant === 'thumbnail' ? await fetchImageResponse(imageUrl, 'original', width) : null);
   if (!response) {
     return createJsonResponse({ error: 'Image unavailable' }, 502, request);
   }
@@ -39,13 +46,13 @@ export async function prewarmCardImage(imageUrlValue: string): Promise<'cached' 
     return 'skipped';
   }
 
-  const cacheKey = createCacheKey(imageUrl);
+  const cacheKey = createCacheKey(imageUrl, 'original', thumbnailWidth);
   const cachedResponse = await caches.default.match(cacheKey);
   if (cachedResponse) {
     return 'cached';
   }
 
-  const response = await fetchImageResponse(imageUrl);
+  const response = await fetchImageResponse(imageUrl, 'original', thumbnailWidth);
   if (!response) {
     return 'failed';
   }
@@ -54,14 +61,24 @@ export async function prewarmCardImage(imageUrlValue: string): Promise<'cached' 
   return 'warmed';
 }
 
-async function fetchImageResponse(imageUrl: URL): Promise<Response | null> {
+async function fetchImageResponse(imageUrl: URL, variant: ImageVariant, width: number): Promise<Response | null> {
   const upstreamResponse = await fetch(imageUrl.toString(), {
     headers: {
       accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
     },
     cf: {
       cacheEverything: true,
-      cacheTtl: edgeCacheSeconds
+      cacheTtl: edgeCacheSeconds,
+      ...(variant === 'thumbnail'
+        ? {
+            image: {
+              fit: 'scale-down',
+              format: 'webp',
+              metadata: 'none',
+              width
+            }
+          }
+        : {})
     }
   });
 
@@ -77,8 +94,22 @@ async function fetchImageResponse(imageUrl: URL): Promise<Response | null> {
 
   return new Response(upstreamResponse.body, {
     status: upstreamResponse.status,
-    headers: createImageHeaders(contentType)
+    headers: createImageHeaders(contentType, variant)
   });
+}
+
+function parseImageVariant(value: string | null): ImageVariant {
+  return value === 'thumbnail' ? 'thumbnail' : 'original';
+}
+
+function parseThumbnailWidth(value: string | null): number {
+  const parsed = value === null ? Number.NaN : Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed)) {
+    return thumbnailWidth;
+  }
+
+  return Math.min(320, Math.max(120, parsed));
 }
 
 function parseAllowedImageUrl(value: string | null): URL | null {
@@ -100,17 +131,20 @@ function parseAllowedImageUrl(value: string | null): URL | null {
   return url;
 }
 
-function createCacheKey(imageUrl: URL): Request {
+function createCacheKey(imageUrl: URL, variant: ImageVariant, width: number): Request {
   const cacheUrl = new URL('/api/card-images', imageCacheOrigin);
   cacheUrl.searchParams.set('url', imageUrl.toString());
+  cacheUrl.searchParams.set('variant', variant);
+  cacheUrl.searchParams.set('width', width.toString());
 
   return new Request(cacheUrl.toString(), { method: 'GET' });
 }
 
-function createImageHeaders(contentType: string): Headers {
+function createImageHeaders(contentType: string, variant: ImageVariant): Headers {
   return new Headers({
     'cache-control': `public, max-age=${browserCacheSeconds}, s-maxage=${edgeCacheSeconds}, immutable`,
     'content-type': contentType,
-    'x-content-type-options': 'nosniff'
+    'x-content-type-options': 'nosniff',
+    'x-image-variant': variant
   });
 }

@@ -6,13 +6,14 @@ defineProps<{
   to: string;
   name: string;
   imageUrl: string | null;
+  thumbnailImageUrl?: string | null;
   priceNzd: number;
 }>();
 </script>
 
 <template>
   <RouterLink :to="to" class="card-tile">
-    <CardImageFrame :image-url="imageUrl" :alt="name" />
+    <CardImageFrame :image-url="thumbnailImageUrl ?? imageUrl" :alt="name" />
     <span class="card-name">{{ name }}</span>
     <strong>{{ formatPrice(priceNzd) }}</strong>
   </RouterLink>
