@@ -1,4 +1,4 @@
-import type { WorkerEnv } from './env';
+import type { SellerSyncQueueMessage, WorkerEnv } from './env';
 import { createJsonResponse, createOptionsResponse } from './shared/http/createJsonResponse';
 import { cardRoutes } from './features/cards/api';
 import { cardImageRoutes } from './features/cardImages/api';
@@ -6,6 +6,18 @@ import { prewarmHighValueCardImages } from './features/cardImages/prewarm';
 import { sellerSyncRoutes } from './features/sellerSync/api';
 import { createAdapterRegistry } from './features/sellerSync/adapters';
 import { syncSeller } from './features/sellerSync/syncSeller';
+
+const SCHEDULED_SELLER_SLUGS = [
+  'calico-keep',
+  'rogue-ops',
+  'spellbound-games',
+  'tcg-collector-nz',
+  'badgers-sett-nz',
+  'bea-dnd-games',
+  'goblin-games',
+  'iron-knight-gaming',
+  'fetch-marketplace'
+];
 
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
@@ -47,29 +59,31 @@ export default {
   },
 
   async scheduled(_controller: ScheduledController, env: WorkerEnv, _ctx: ExecutionContext): Promise<void> {
-    for (const sellerSlug of [
-      'calico-keep',
-      'rogue-ops',
-      'spellbound-games',
-      'tcg-collector-nz',
-      'badgers-sett-nz',
-      'bea-dnd-games',
-      'goblin-games',
-      'iron-knight-gaming',
-      'fetch-marketplace'
-    ]) {
-      try {
-        await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
-      } catch (error) {
-        console.error(`Scheduled sync failed for ${sellerSlug}`, error);
-      }
-    }
+    await env.SELLER_SYNC_QUEUE.sendBatch(
+      SCHEDULED_SELLER_SLUGS.map(sellerSlug => ({
+        body: { sellerSlug }
+      }))
+    );
 
     try {
       const result = await prewarmHighValueCardImages(env.DB);
       console.log('Scheduled card image prewarm complete', result);
     } catch (error) {
       console.error('Scheduled card image prewarm failed', error);
+    }
+  },
+
+  async queue(batch: MessageBatch<SellerSyncQueueMessage>, env: WorkerEnv): Promise<void> {
+    for (const message of batch.messages) {
+      const sellerSlug = message.body.sellerSlug;
+
+      try {
+        await syncSeller(env.DB, createAdapterRegistry(), sellerSlug);
+        message.ack();
+      } catch (error) {
+        console.error(`Queued sync failed for ${sellerSlug}`, error);
+        message.retry({ delaySeconds: 300 });
+      }
     }
   }
 };

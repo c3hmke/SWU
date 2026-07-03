@@ -7,6 +7,17 @@ binding = "DB"
 database_name = "swu-singles-nz"
 database_id = "39a9b2a4-365e-4d5c-89ac-84b1d8e2f2bb"
 
+[[queues.producers]]
+binding = "SELLER_SYNC_QUEUE"
+queue = "swu-seller-sync"
+
+[[queues.consumers]]
+queue = "swu-seller-sync"
+max_batch_size = 1
+max_retries = 2
+retry_delay = 300
+max_concurrency = 1
+
 [[ratelimits]]
 name = "READ_RATE_LIMITER"
 namespace_id = "1001"
