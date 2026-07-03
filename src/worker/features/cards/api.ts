@@ -21,6 +21,8 @@ import {
 } from './queries';
 
 const maxBulkSearchNames = 150;
+const defaultCardListLimit = 50;
+const maxCardListLimit = 150;
 
 type BulkSearchListing = Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number] & {
   requestedQuantity: number;
@@ -37,7 +39,9 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
 
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const name = url.searchParams.get('name')?.trim() || null;
-    const cards = await listCardsByChasePrice(env.DB, { name });
+    const pageSize = parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit);
+    const page = parseBoundedInteger(url.searchParams.get('page'), 1, 1, 1_000);
+    const cards = await listCardsByChasePrice(env.DB, { name, limit: pageSize, offset: (page - 1) * pageSize });
     return createJsonResponse(cards.map(card => mapCardListItemDto(request, card)), 200, request);
   }
 
@@ -89,6 +93,16 @@ function createProxiedImageUrl(request: Request, imageUrl: string): string {
   const url = new URL('/api/card-images', request.url);
   url.searchParams.set('url', imageUrl);
   return url.toString();
+}
+
+function parseBoundedInteger(value: string | null, fallback: number, min: number, max: number): number {
+  const parsed = value === null ? Number.NaN : Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, parsed));
 }
 
 async function getCardDetails(db: D1Database, cardId: string): Promise<CardDetailsDto> {

@@ -45,4 +45,6 @@ export type BulkCardListing = CardListing & {
 
 export type CardListSearchCriteria = {
   name: string | null;
+  limit: number;
+  offset: number;
 };

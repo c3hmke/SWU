@@ -11,9 +11,8 @@ export type CardImagePrewarmResult = Record<PrewarmStatus, number> & {
 };
 
 export async function prewarmHighValueCardImages(db: D1Database): Promise<CardImagePrewarmResult> {
-  const cards = await listCardsByChasePrice(db, { name: null });
+  const cards = await listCardsByChasePrice(db, { name: null, limit: DEFAULT_PREWARM_LIMIT, offset: 0 });
   const imageUrls = cards
-    .slice(0, DEFAULT_PREWARM_LIMIT)
     .map(card => card.imageUrl)
     .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
   const statuses = await runWithConcurrency(imageUrls, DEFAULT_PREWARM_CONCURRENCY, prewarmCardImage);

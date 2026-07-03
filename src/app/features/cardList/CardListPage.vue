@@ -15,40 +15,69 @@ const cards = ref<CardListItemDto[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
+const minSearchCharacters = 2;
 const highValuePageCount = 12;
 const highValuePageSize = 12;
+const searchPageSize = 50;
 const highValuePage = ref(Math.max(1, Math.min(highValuePageCount, Number(route.query.page) || 1)));
 const hasNameFilter = computed(() => Boolean(nameFilter.value.trim()));
+const needsMoreSearchInput = computed(() => {
+  const trimmedName = nameFilter.value.trim();
+  return Boolean(trimmedName) && trimmedName.length < minSearchCharacters;
+});
 const visibleCards = computed(() => {
-  if (hasNameFilter.value) {
-    return cards.value;
-  }
-
-  const start = (highValuePage.value - 1) * highValuePageSize;
-  return cards.value.slice(start, start + highValuePageSize);
+  return cards.value;
 });
 const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'High value signals'));
 const highValuePages = computed(() => Array.from({ length: highValuePageCount }, (_, index) => index + 1));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+let cardListAbortController: AbortController | null = null;
 
 async function loadCards() {
+  const trimmedName = nameFilter.value.trim();
+
+  if (trimmedName && trimmedName.length < minSearchCharacters) {
+    cardListAbortController?.abort();
+    cards.value = [];
+    isLoading.value = false;
+    errorMessage.value = null;
+    return;
+  }
+
+  cardListAbortController?.abort();
+  const abortController = new AbortController();
+  cardListAbortController = abortController;
   isLoading.value = true;
   errorMessage.value = null;
 
   try {
-    cards.value = await listCards({ name: nameFilter.value });
+    cards.value = await listCards({
+      name: trimmedName,
+      page: trimmedName ? 1 : highValuePage.value,
+      pageSize: trimmedName ? searchPageSize : highValuePageSize,
+      signal: abortController.signal
+    });
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return;
+    }
+
     errorMessage.value = error instanceof Error ? error.message : 'Unable to load cards';
   } finally {
-    isLoading.value = false;
+    if (!abortController.signal.aborted) {
+      isLoading.value = false;
+    }
   }
 }
 
 onMounted(loadCards);
 
 watch(() => route.query.page, (page) => {
-  const newPage = Math.max(1, Math.min(highValuePageCount, Number(page) || 1));
-  highValuePage.value = newPage;
+  highValuePage.value = Math.max(1, Math.min(highValuePageCount, Number(page) || 1));
+
+  if (!hasNameFilter.value) {
+    void loadCards();
+  }
 });
 
 watch(nameFilter, () => {
@@ -69,7 +98,7 @@ watch(nameFilter, () => {
     });
 
     void loadCards();
-  }, 200);
+  }, 350);
 });
 
 function clearSearch() {
@@ -140,6 +169,7 @@ function adjustHighValuePage(delta: number) {
 
       <p v-if="isLoading" class="muted screen-message">Loading cards...</p>
       <p v-else-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
+      <p v-else-if="needsMoreSearchInput" class="muted screen-message">Enter at least {{ minSearchCharacters }} characters.</p>
       <p v-else-if="cards.length === 0" class="muted screen-message">No cards currently have listings.</p>
 
       <div v-else class="card-grid">

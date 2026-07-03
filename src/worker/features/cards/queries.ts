@@ -55,9 +55,10 @@ export async function listCardsByChasePrice(
                  where l.quantity > 0
                    and (?1 is null or lower(c.name) like '%' || lower(?1) || '%')
                  group by c.id, c.name, c.image_url
-                 order by lowest_price_nzd desc, c.name asc`;
+                 order by lowest_price_nzd desc, c.name asc
+                 limit ?2 offset ?3`;
 
-  const result = await db.prepare(query).bind(criteria.name).all<CardListRow>();
+  const result = await db.prepare(query).bind(criteria.name, criteria.limit, criteria.offset).all<CardListRow>();
 
   return result.results.map(row => ({
     id: row.id,
