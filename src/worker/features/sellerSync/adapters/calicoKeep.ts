@@ -1,4 +1,5 @@
 import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from '../model';
+import { normalizeCondition } from '../../../shared/conditionNormalizer';
 
 const BATCH_SIZE = 200;
 const STOREPASS_STORE_ID = 'MInamaYs3W';
@@ -49,7 +50,7 @@ export class CalicoKeepStorepassAdapter implements SellerAdapter {
             listings.push({
               externalId: variant.id.toString(),
               productName: product.name,
-              condition: variant.title === 'Default Title' ? null : variant.title,
+              condition: normalizeCondition(variant.title === 'Default Title' ? null : variant.title),
               priceNzd: variant.price,
               quantity: variant.inventory_quantity,
               productUrl: product.url,

@@ -1,11 +1,11 @@
 const currencyFormatter = new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' });
 
 const conditionLabels: Record<string, string> = {
-  'near mint': 'NM',
-  'light play': 'LP',
-  'moderate play': 'MP',
-  'heavy play': 'HP',
-  damaged: 'D'
+  'nm': 'NM',
+  'lp': 'LP',
+  'mp': 'MP',
+  'hp': 'HP',
+  'd': 'D'
 };
 
 export function formatPrice(price: number): string {

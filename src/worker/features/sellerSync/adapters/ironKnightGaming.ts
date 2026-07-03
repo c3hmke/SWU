@@ -1,4 +1,5 @@
 import { createShopifyCollectionAdapter } from '../integrations/shopifyIntegration';
+import { normalizeCondition } from '../../../shared/conditionNormalizer';
 
 export const ironKnightGamingAdapter = createShopifyCollectionAdapter({
   key: 'ironknightgaming-shopify',
@@ -21,6 +22,6 @@ export const ironKnightGamingAdapter = createShopifyCollectionAdapter({
       return null;
     }
 
-    return variant.option3;
+    return normalizeCondition(variant.option3);
   }
 });

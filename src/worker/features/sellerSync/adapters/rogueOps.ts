@@ -119,7 +119,7 @@ function mapTileToListing(tile: RogueOpsTile): ExternalListing {
   return {
     externalId: tile.cardId,
     productName: `${tile.cardName} (${tile.collectorNumber}) [${tile.setName}]`,
-    condition: formatVariant(tile.variant),
+    condition: 'NM',
     priceNzd: tile.priceNzd,
     quantity: tile.quantity,
     productUrl: `${BASE_URL}/cards?q=${encodeURIComponent(tile.cardName)}&instock=1`,
@@ -178,16 +178,7 @@ function parseSetName(meta: string, setCode: string): string {
   return match?.[1]?.trim() || setNamesByCode[setCode] || setCode;
 }
 
-function formatVariant(variant: string | null): string | null {
-  if (!variant || variant === 'normal') {
-    return null;
-  }
 
-  return variant
-    .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
 
 function stripTags(value: string): string {
   return value.replace(/<[^>]*>/g, '');

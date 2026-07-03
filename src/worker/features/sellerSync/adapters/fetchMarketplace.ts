@@ -1,4 +1,5 @@
 import type { ExternalListing, Seller, SellerAdapter, SyncCard } from '../model';
+import { normalizeCondition } from '../../../shared/conditionNormalizer';
 
 const API_BASE_URL = 'https://api.fetchtcg.com';
 const WEB_BASE_URL = 'https://www.fetchtcg.com';
@@ -102,7 +103,7 @@ function mapFetchListing(listing: FetchListing): ExternalListing[] {
   return [{
     externalId: id,
     productName,
-    condition: mapCondition(listing.condition),
+    condition: normalizeCondition(listing.condition),
     priceNzd,
     quantity,
     productUrl: `${WEB_BASE_URL}/marketplace/listings/${id}`,
@@ -130,24 +131,7 @@ function createProductName(listing: FetchListing): string | null {
   return `${cardName} (${collectorNumber}) [${setName}]`;
 }
 
-function mapCondition(condition: string | null | undefined): string | null {
-  switch (condition) {
-    case 'raw-m':
-      return 'Mint';
-    case 'raw-nm':
-      return 'Near Mint';
-    case 'raw-lp':
-      return 'Lightly Played';
-    case 'raw-mp':
-      return 'Moderately Played';
-    case 'raw-hp':
-      return 'Heavily Played';
-    case 'raw-dmg':
-      return 'Damaged';
-    default:
-      return condition ?? null;
-  }
-}
+
 
 function formatLocation(listing: FetchListing): string | null {
   const parts = [listing.regionAddress?.suburb, listing.regionAddress?.city, listing.regionAddress?.country ?? listing.listedCountry]

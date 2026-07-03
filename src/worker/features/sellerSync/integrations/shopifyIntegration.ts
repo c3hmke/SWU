@@ -1,4 +1,5 @@
 import type { ExternalListing, Seller, SellerAdapter, SellerCartListing, SyncCard } from '../model';
+import { normalizeCondition } from '../../../shared/conditionNormalizer';
 
 const DEFAULT_MAX_PAGES = 50;
 const DEFAULT_PAGE_SIZE = 250;
@@ -254,7 +255,7 @@ function getProductType(product: ShopifyProduct): string | undefined {
 }
 
 function defaultCondition(variant: ShopifyVariant): string | null {
-  return variant.title === 'Default Title' ? null : variant.title;
+  return normalizeCondition(variant.title === 'Default Title' ? null : variant.title);
 }
 
 function parsePrice(price: string | number, divisor: number): number | null {
