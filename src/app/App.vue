@@ -8,11 +8,12 @@
       <nav class="site-nav" aria-label="Primary navigation">
         <RouterLink to="/cards">Cards</RouterLink>
         <RouterLink to="/bulk-search">Bulk lookup</RouterLink>
+        <RouterLink to="/contact">Contact</RouterLink>
       </nav>
     </header>
 
     <aside class="sponsor-rail" aria-label="Sponsor message">
-      <a class="sponsor-card" href="mailto:sponsor@swusingles.nz?subject=Sponsor%20SWU%20Singles%20NZ">
+      <RouterLink class="sponsor-card" to="/contact">
         <span class="sponsor-controls" aria-hidden="true">
           <span></span>
           <span></span>
@@ -24,7 +25,7 @@
           <span class="sponsor-copy">This quiet spot helps cover hosting and data costs.</span>
           <span class="sponsor-action">Interested?</span>
         </span>
-      </a>
+      </RouterLink>
     </aside>
 
     <main>

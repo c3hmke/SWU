@@ -11,29 +11,28 @@ type ImageVariant = 'original' | 'thumbnail';
 export async function cardImageRoutes(request: Request, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
 
-  if (url.pathname !== '/api/card-images' || request.method !== 'GET') {
+  if (url.pathname !== '/api/card-images' || request.method !== 'GET')
     return createJsonResponse({ error: 'Not found' }, 404, request);
-  }
 
   const imageUrl = parseAllowedImageUrl(url.searchParams.get('url'));
-  if (!imageUrl) {
+
+  if (!imageUrl)
     return createJsonResponse({ error: 'Invalid image URL' }, 400, request);
-  }
 
   const variant = parseImageVariant(url.searchParams.get('variant'));
   const width = parseThumbnailWidth(url.searchParams.get('width'));
   const cacheKey = createCacheKey(imageUrl, variant, width);
+
   const cachedResponse = await caches.default.match(cacheKey);
   if (cachedResponse) {
     return cachedResponse;
   }
 
-  const response =
-    await fetchImageResponse(imageUrl, variant, width) ??
-    (variant === 'thumbnail' ? await fetchImageResponse(imageUrl, 'original', width) : null);
-  if (!response) {
+  const response = await fetchImageResponse(imageUrl, variant, width)
+      ?? (variant === 'thumbnail' ? await fetchImageResponse(imageUrl, 'original', width) : null);
+
+  if (!response)
     return createJsonResponse({ error: 'Image unavailable' }, 502, request);
-  }
 
   ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
 
@@ -42,20 +41,16 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
 
 export async function prewarmCardImage(imageUrlValue: string): Promise<'cached' | 'warmed' | 'skipped' | 'failed'> {
   const imageUrl = parseAllowedImageUrl(imageUrlValue);
-  if (!imageUrl) {
-    return 'skipped';
-  }
+
+  if (!imageUrl) return 'skipped';
 
   const cacheKey = createCacheKey(imageUrl, 'original', thumbnailWidth);
   const cachedResponse = await caches.default.match(cacheKey);
-  if (cachedResponse) {
-    return 'cached';
-  }
+
+  if (cachedResponse) return 'cached';
 
   const response = await fetchImageResponse(imageUrl, 'original', thumbnailWidth);
-  if (!response) {
-    return 'failed';
-  }
+  if (!response) return 'failed';
 
   await caches.default.put(cacheKey, response);
   return 'warmed';
@@ -82,9 +77,7 @@ async function fetchImageResponse(imageUrl: URL, variant: ImageVariant, width: n
     }
   });
 
-  if (!upstreamResponse.ok) {
-    return null;
-  }
+  if (!upstreamResponse.ok) return null;
 
   const contentType = upstreamResponse.headers.get('content-type') ?? '';
   if (!contentType.toLowerCase().startsWith('image/')) {
@@ -105,34 +98,32 @@ function parseImageVariant(value: string | null): ImageVariant {
 function parseThumbnailWidth(value: string | null): number {
   const parsed = value === null ? Number.NaN : Number.parseInt(value, 10);
 
-  if (!Number.isFinite(parsed)) {
+  if (!Number.isFinite(parsed))
     return thumbnailWidth;
-  }
 
   return Math.min(320, Math.max(120, parsed));
 }
 
 function parseAllowedImageUrl(value: string | null): URL | null {
-  if (!value) {
-    return null;
-  }
+  if (!value) return null;
 
   let url: URL;
   try {
     url = new URL(value);
-  } catch {
+  }
+  catch {
     return null;
   }
 
-  if (url.protocol !== 'https:' || !allowedImageHosts.has(url.hostname)) {
+  if (url.protocol !== 'https:' || !allowedImageHosts.has(url.hostname))
     return null;
-  }
 
   return url;
 }
 
 function createCacheKey(imageUrl: URL, variant: ImageVariant, width: number): Request {
   const cacheUrl = new URL('/api/card-images', imageCacheOrigin);
+
   cacheUrl.searchParams.set('url', imageUrl.toString());
   cacheUrl.searchParams.set('variant', variant);
   cacheUrl.searchParams.set('width', width.toString());
