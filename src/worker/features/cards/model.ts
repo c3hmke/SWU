@@ -6,6 +6,7 @@ export type Card = {
   collectorNumber: number;
   totalCards: number | null;
   imageUrl: string | null;
+  variantOf: string | null;
 };
 
 export type CardListItem = {

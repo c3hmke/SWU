@@ -183,8 +183,10 @@ function selectRepresentativeCards(
   listings: Awaited<ReturnType<typeof listActiveListingsByCardIds>>
 ): Card[] {
   const cheapestListingByCardId = new Map<string, Awaited<ReturnType<typeof listActiveListingsByCardIds>>[number]>();
+  const hasListingByCardId = new Set<string>();
 
   for (const listing of listings) {
+    hasListingByCardId.add(listing.cardId);
     const current = cheapestListingByCardId.get(listing.cardId);
 
     if (!current || listing.priceNzd < current.priceNzd) {
@@ -193,14 +195,11 @@ function selectRepresentativeCards(
   }
 
   return requestedCards.flatMap(requestedCard => {
-    const variants = matchedCards.filter(card => normalizeCardName(card.name) === requestedCard.normalizedName);
-    if (variants.length === 0) {
-      return [];
-    }
-
-    return variants
-      .sort((left, right) => compareCardVariants(left, right, cheapestListingByCardId))
-      .slice(0, 1);
+    const variants = matchedCards
+      .filter(card => normalizeCardName(card.name) === requestedCard.normalizedName && hasListingByCardId.has(card.id))
+      .sort((left, right) => compareCardVariants(left, right, cheapestListingByCardId));
+    
+    return variants;
   });
 }
 
