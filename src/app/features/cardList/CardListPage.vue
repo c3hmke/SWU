@@ -17,7 +17,7 @@ const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
 const highValuePageCount = 12;
 const highValuePageSize = 12;
-const highValuePage = ref(1);
+const highValuePage = ref(Math.max(1, Math.min(highValuePageCount, Number(route.query.page) || 1)));
 const hasNameFilter = computed(() => Boolean(nameFilter.value.trim()));
 const visibleCards = computed(() => {
   if (hasNameFilter.value) {
@@ -46,6 +46,11 @@ async function loadCards() {
 
 onMounted(loadCards);
 
+watch(() => route.query.page, (page) => {
+  const newPage = Math.max(1, Math.min(highValuePageCount, Number(page) || 1));
+  highValuePage.value = newPage;
+});
+
 watch(nameFilter, () => {
   if (searchTimeout) {
     clearTimeout(searchTimeout);
@@ -58,7 +63,8 @@ watch(nameFilter, () => {
     void router.replace({
       query: {
         ...route.query,
-        name: trimmedName || undefined
+        name: trimmedName || undefined,
+        page: undefined
       }
     });
 
@@ -71,11 +77,22 @@ function clearSearch() {
 }
 
 function selectHighValuePage(page: number) {
-  highValuePage.value = page;
+  void router.replace({
+    query: {
+      ...route.query,
+      page: page > 1 ? String(page) : undefined
+    }
+  });
 }
 
 function adjustHighValuePage(delta: number) {
-  highValuePage.value = Math.min(highValuePageCount, Math.max(1, highValuePage.value + delta));
+  const newPage = Math.min(highValuePageCount, Math.max(1, highValuePage.value + delta));
+  void router.replace({
+    query: {
+      ...route.query,
+      page: newPage > 1 ? String(newPage) : undefined
+    }
+  });
 }
 </script>
 
