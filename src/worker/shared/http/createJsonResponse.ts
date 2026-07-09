@@ -1,4 +1,6 @@
 const allowedOrigins = new Set([
+  'https://www.swu.nz',
+  'https://swu.nz',
   'https://swu-singles-nz.pages.dev',
   'http://localhost:5173',
   'http://127.0.0.1:5173'
