@@ -33,6 +33,10 @@ const highValuePages = computed(() => Array.from({ length: highValuePageCount },
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cardListAbortController: AbortController | null = null;
 
+function createCardPath(card: CardListItemDto): string {
+  return `/cards/${card.slug || card.id}`;
+}
+
 async function loadCards() {
   const trimmedName = nameFilter.value.trim();
 
@@ -176,7 +180,7 @@ function adjustHighValuePage(delta: number) {
         <CardTile
           v-for="card in visibleCards"
           :key="card.id"
-          :to="`/cards/${card.id}`"
+          :to="createCardPath(card)"
           :name="card.name"
           :image-url="card.proxiedImageUrl ?? card.imageUrl"
           :thumbnail-image-url="card.thumbnailImageUrl"

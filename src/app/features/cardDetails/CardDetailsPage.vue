@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { CardDetailsDto } from '../../../shared/contracts/cards';
 import AppPage from '../../components/AppPage.vue';
 import CardImageFrame from '../../components/CardImageFrame.vue';
@@ -11,6 +12,8 @@ const props = defineProps<{
   cardId: string;
 }>();
 
+const route = useRoute();
+const router = useRouter();
 const card = ref<CardDetailsDto | null>(null);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
@@ -27,6 +30,7 @@ async function loadCard() {
 
   try {
     card.value = await getCardDetails(props.cardId);
+    replaceCardPathWithCanonicalSlug(card.value);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Unable to load card details';
   } finally {
@@ -34,6 +38,19 @@ async function loadCard() {
     await nextTick();
     fitCardTitle();
   }
+}
+
+function replaceCardPathWithCanonicalSlug(card: CardDetailsDto) {
+  if (route.name !== 'card-details' || props.cardId === card.slug) {
+    return;
+  }
+
+  void router.replace({
+    name: 'card-details',
+    params: { id: card.slug },
+    query: route.query,
+    hash: route.hash
+  });
 }
 
 function splitCardName(name: string): { title: string; subtitle: string | null } {

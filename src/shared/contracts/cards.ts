@@ -1,5 +1,6 @@
 export type CardDetailsDto = {
   id: string;
+  slug: string;
   name: string;
   setCode: string;
   setName: string | null;
@@ -11,6 +12,7 @@ export type CardDetailsDto = {
 
 export type CardListItemDto = {
   id: string;
+  slug: string;
   name: string;
   imageUrl: string | null;
   proxiedImageUrl: string | null;
@@ -47,6 +49,7 @@ export type BulkCardSearchRequestDto = {
 
 export type BulkCardSearchCardDto = {
   id: string;
+  slug: string;
   name: string;
   imageUrl: string | null;
   requestedQuantity: number;
@@ -55,6 +58,7 @@ export type BulkCardSearchCardDto = {
 
 export type BulkCardSearchListingDto = CardListingDto & {
   cardId: string;
+  cardSlug: string;
   cardName: string;
   cardImageUrl: string | null;
   requestedQuantity: number;

@@ -159,6 +159,14 @@ function clearInput() {
     fileInput.value.value = '';
   }
 }
+
+function createCardPath(card: { id: string; slug?: string }): string {
+  return `/cards/${card.slug || card.id}`;
+}
+
+function createListingCardPath(listing: { cardId: string; cardSlug?: string }): string {
+  return `/cards/${listing.cardSlug || listing.cardId}`;
+}
 </script>
 
 <template>
@@ -216,7 +224,7 @@ function clearInput() {
 
           <div class="listing-list">
             <ListingRow v-for="listing in seller.listings" :key="listing.id" variant="bulk">
-              <RouterLink class="card-link" :to="`/cards/${listing.cardId}`">
+              <RouterLink class="card-link" :to="createListingCardPath(listing)">
                 <CardImageFrame :image-url="listing.cardImageUrl" :alt="listing.cardName" variant="mini" />
                 <div class="card-copy">
                   <strong>{{ listing.cardName }}</strong>
@@ -247,7 +255,7 @@ function clearInput() {
       <section v-if="matchedCardsWithoutListings.length" class="unmatched-panel">
         <div class="subsection-heading">Matched, no current stock</div>
         <div class="name-chip-list">
-          <NameChip v-for="card in matchedCardsWithoutListings" :key="card.id" :to="`/cards/${card.id}`">
+          <NameChip v-for="card in matchedCardsWithoutListings" :key="card.id" :to="createCardPath(card)">
             {{ card.missingQuantity }}x {{ card.name }}
           </NameChip>
         </div>

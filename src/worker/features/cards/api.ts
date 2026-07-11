@@ -6,6 +6,7 @@ import type {
   CardListItemDto,
   CardDetailsDto
 } from '../../../shared/contracts/cards';
+import { createCardSlug, resolveCardIdFromSlug } from '../../../shared/cardSlugs';
 import type { WorkerEnv } from '../../env';
 import { NotFoundError } from '../../shared/errors/NotFoundError';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
@@ -85,6 +86,7 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
 function mapCardListItemDto(request: Request, card: Awaited<ReturnType<typeof listCardsByChasePrice>>[number]): CardListItemDto {
   return {
     ...card,
+    slug: createCardSlug(card),
     proxiedImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl) : null,
     thumbnailImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl, 'thumbnail') : null
   };
@@ -112,8 +114,8 @@ function parseBoundedInteger(value: string | null, fallback: number, min: number
   return Math.min(max, Math.max(min, parsed));
 }
 
-async function getCardDetails(db: D1Database, cardId: string): Promise<CardDetailsDto> {
-  const card = await getCardById(db, cardId);
+async function getCardDetails(db: D1Database, slugOrId: string): Promise<CardDetailsDto> {
+  const card = await getCardById(db, resolveCardIdFromSlug(slugOrId));
 
   if (!card) {
     throw new NotFoundError('Card not found');
@@ -121,6 +123,7 @@ async function getCardDetails(db: D1Database, cardId: string): Promise<CardDetai
 
   return {
     ...card,
+    slug: createCardSlug(card),
     listings: await listActiveListingsByCardId(db, card.id)
   };
 }
@@ -154,6 +157,7 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
   return {
     matchedCards: cards.map(card => ({
       id: card.id,
+      slug: createCardSlug(card),
       name: card.name,
       imageUrl: card.imageUrl,
       requestedQuantity: requestedQuantityByCardId.get(card.id) ?? 1,
@@ -291,6 +295,7 @@ function mapBulkListingDto(listing: BulkSearchListing): BulkCardSearchListingDto
     marketplaceAllowPickups: listing.marketplaceAllowPickups,
     lastSeenAt: listing.lastSeenAt,
     cardId: listing.cardId,
+    cardSlug: createCardSlug({ id: listing.cardId, name: listing.cardName }),
     cardName: listing.cardName,
     cardImageUrl: listing.cardImageUrl,
     requestedQuantity: listing.requestedQuantity
