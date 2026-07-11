@@ -5,11 +5,12 @@
   "type": "module",
 
   "scripts": {
-    "build": "npm run app:build && npm run worker:typecheck",
+    "build": "npm run app:build && npm run worker:typecheck && npm run functions:typecheck",
     "app:dev": "vite --host 0.0.0.0",
     "app:typecheck": "vue-tsc -p tsconfig.app.json --noEmit",
     "app:build": "npm run app:typecheck && vite build",
     "app:preview": "vite preview --host 0.0.0.0",
+    "functions:typecheck": "tsc -p tsconfig.functions.json --noEmit",
     "worker:typecheck": "tsc -p tsconfig.worker.json --noEmit",
     "worker:dev": "wrangler dev src/worker/index.ts",
     "worker:deploy": "wrangler deploy src/worker/index.ts",
