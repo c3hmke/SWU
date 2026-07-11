@@ -18,6 +18,12 @@ type CardListRow = {
   lowest_price_nzd: number;
 };
 
+type SitemapCardRow = {
+  id: string;
+  name: string;
+  updated_at: string;
+};
+
 type ListingRow = {
   id: string;
   seller_id: string;
@@ -81,6 +87,18 @@ export async function getCardById(db: D1Database, id: string): Promise<Card | nu
     .first<CardRow>();
 
   return row ? mapCard(row) : null;
+}
+
+export async function listCardsForSitemap(db: D1Database): Promise<SitemapCardRow[]> {
+  const result = await db
+    .prepare(
+      `select c.id, c.name, c.updated_at
+       from cards c
+       order by c.set_code asc, c.collector_number asc, c.name asc`
+    )
+    .all<SitemapCardRow>();
+
+  return result.results;
 }
 
 export async function listCardsByExactNormalizedNames(db: D1Database, normalizedNames: string[]): Promise<Card[]> {

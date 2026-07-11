@@ -7,6 +7,7 @@ import { sellerSyncRoutes } from './features/sellerSync/api';
 import { createAdapterRegistry } from './features/sellerSync/adapters';
 import { syncSeller } from './features/sellerSync/syncSeller';
 import { contactRoutes } from './features/contact/api';
+import { createSitemapResponse } from './features/seo/sitemap';
 
 const SCHEDULED_SELLER_SLUGS = [
   'calico-keep',
@@ -60,6 +61,9 @@ export default {
 
     if (url.pathname === '/api/health')
       return createJsonResponse({ status: 'ok' }, 200, request);
+
+    if (url.pathname === '/sitemap.xml' || url.pathname === '/api/sitemap.xml')
+      return createSitemapResponse(env);
 
     return createJsonResponse({ error: 'Not found' }, 404, request);
   },

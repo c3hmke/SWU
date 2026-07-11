@@ -1,4 +1,4 @@
-/cards/* /index.html 200
-/bulk-search /index.html 200
-/contact /index.html 200
-/sponsor /index.html 200
+/bulk-search / 200
+/contact / 200
+/sponsor / 200
+/cards/* / 200

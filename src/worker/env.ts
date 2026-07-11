@@ -9,6 +9,7 @@ export type WorkerEnv = {
   RESEND_API_KEY: string;
   CONTACT_EMAIL_FROM: string;
   CONTACT_EMAIL_TO: string;
+  SITE_BASE_URL?: string;
 };
 
 export type SellerSyncQueueMessage = {
