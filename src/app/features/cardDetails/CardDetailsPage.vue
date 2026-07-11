@@ -5,6 +5,7 @@ import type { CardDetailsDto } from '../../../shared/contracts/cards';
 import AppPage from '../../components/AppPage.vue';
 import CardImageFrame from '../../components/CardImageFrame.vue';
 import ConsolePanel from '../../components/ConsolePanel.vue';
+import { applyPageMetadata } from '../../metadata';
 import CardListingTable from './CardListingTable.vue';
 import { getCardDetails } from './useCardDetails';
 
@@ -31,6 +32,7 @@ async function loadCard() {
   try {
     card.value = await getCardDetails(props.cardId);
     replaceCardPathWithCanonicalSlug(card.value);
+    applyCardMetadata(card.value);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Unable to load card details';
   } finally {
@@ -38,6 +40,23 @@ async function loadCard() {
     await nextTick();
     fitCardTitle();
   }
+}
+
+function applyCardMetadata(card: CardDetailsDto) {
+  const setLabel = card.setName || card.setCode;
+  const lowestPrice = card.listings.length
+    ? Math.min(...card.listings.map(listing => listing.priceNzd))
+    : null;
+
+  applyPageMetadata({
+    title: `${card.name} | SWU Singles NZ`,
+    description: lowestPrice === null
+      ? `View ${card.name} from ${setLabel} in the SWU Singles NZ card database.`
+      : `Compare current NZ listings for ${card.name} from ${setLabel}. Lowest listed price: ${formatPrice(lowestPrice)}.`,
+    canonicalPath: `/cards/${card.slug}`,
+    imageUrl: card.imageUrl,
+    type: 'product'
+  });
 }
 
 function replaceCardPathWithCanonicalSlug(card: CardDetailsDto) {
@@ -51,6 +70,13 @@ function replaceCardPathWithCanonicalSlug(card: CardDetailsDto) {
     query: route.query,
     hash: route.hash
   });
+}
+
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat('en-NZ', {
+    style: 'currency',
+    currency: 'NZD'
+  }).format(value);
 }
 
 function splitCardName(name: string): { title: string; subtitle: string | null } {
