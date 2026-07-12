@@ -21,7 +21,7 @@ defineProps<{
       </div>
     </div>
 
-    <p v-if="listings.length === 0" class="muted">No sellers currently have this card in stock.</p>
+    <p v-if="listings.length === 0" class="muted">no listings found</p>
 
     <div v-else class="listing-list">
       <ListingRow v-for="listing in listings" :key="listing.id">

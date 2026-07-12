@@ -13,7 +13,7 @@ export type CardListItem = {
   id: string;
   name: string;
   imageUrl: string | null;
-  lowestPriceNzd: number;
+  lowestPriceNzd: number | null;
 };
 
 export type CardListing = {

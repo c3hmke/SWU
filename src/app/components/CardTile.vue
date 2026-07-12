@@ -7,15 +7,15 @@ defineProps<{
   name: string;
   imageUrl: string | null;
   thumbnailImageUrl?: string | null;
-  priceNzd: number;
+  priceNzd: number | null;
 }>();
 </script>
 
 <template>
-  <RouterLink :to="to" class="card-tile">
+  <RouterLink :to="to" class="card-tile" :class="{ unavailable: priceNzd === null }">
     <CardImageFrame :image-url="thumbnailImageUrl ?? imageUrl" :alt="name" />
     <span class="card-name">{{ name }}</span>
-    <strong>{{ formatPrice(priceNzd) }}</strong>
+    <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
   </RouterLink>
 </template>
 
@@ -51,6 +51,21 @@ defineProps<{
   transform: translateY(-2px);
 }
 
+.card-tile.unavailable {
+  background:
+    linear-gradient(180deg, rgba(51, 65, 85, 0.42), rgba(15, 23, 42, 0.82)),
+    rgba(15, 23, 42, 0.66);
+  border-color: rgba(148, 163, 184, 0.18);
+  filter: grayscale(0.78);
+  opacity: 0.66;
+}
+
+.card-tile.unavailable:hover {
+  border-color: rgba(148, 163, 184, 0.42);
+  filter: grayscale(0.55);
+  opacity: 0.78;
+}
+
 .card-name {
   font-size: 0.94rem;
   font-weight: 800;
@@ -63,5 +78,11 @@ strong {
   font-size: 0.96rem;
   letter-spacing: 0.03em;
   white-space: nowrap;
+}
+
+.unavailable strong {
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  text-transform: uppercase;
 }
 </style>

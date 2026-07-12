@@ -174,7 +174,9 @@ function adjustHighValuePage(delta: number) {
       <p v-if="isLoading" class="muted screen-message">Loading cards...</p>
       <p v-else-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
       <p v-else-if="needsMoreSearchInput" class="muted screen-message">Enter at least {{ minSearchCharacters }} characters.</p>
-      <p v-else-if="cards.length === 0" class="muted screen-message">No cards currently have listings.</p>
+      <p v-else-if="cards.length === 0" class="muted screen-message">
+        {{ hasNameFilter ? 'No matching cards found.' : 'No cards currently have listings.' }}
+      </p>
 
       <div v-else class="card-grid">
         <CardTile

@@ -15,7 +15,7 @@ type CardListRow = {
   id: string;
   name: string;
   image_url: string | null;
-  lowest_price_nzd: number;
+  lowest_price_nzd: number | null;
 };
 
 type SitemapCardRow = {
@@ -55,16 +55,26 @@ export async function listCardsByChasePrice(
   db: D1Database,
   criteria: CardListSearchCriteria
 ): Promise<CardListItem[]> {
-  const query = `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
-                 from cards c
-                 inner join listings l on l.card_id = c.id
-                 where l.quantity > 0
-                   and (?1 is null or lower(c.name) like '%' || lower(?1) || '%')
-                 group by c.id, c.name, c.image_url
-                 order by lowest_price_nzd desc, c.name asc
-                 limit ?2 offset ?3`;
+  const query = criteria.name
+    ? `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
+       from cards c
+       left join listings l on l.card_id = c.id and l.quantity > 0
+       where lower(c.name) like '%' || lower(?1) || '%'
+       group by c.id, c.name, c.image_url
+       order by lowest_price_nzd is null asc, lowest_price_nzd desc, c.name asc
+       limit ?2 offset ?3`
+    : `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
+       from cards c
+       inner join listings l on l.card_id = c.id
+       where l.quantity > 0
+       group by c.id, c.name, c.image_url
+       order by lowest_price_nzd desc, c.name asc
+       limit ?1 offset ?2`;
 
-  const result = await db.prepare(query).bind(criteria.name, criteria.limit, criteria.offset).all<CardListRow>();
+  const bindings = criteria.name
+    ? [criteria.name, criteria.limit, criteria.offset]
+    : [criteria.limit, criteria.offset];
+  const result = await db.prepare(query).bind(...bindings).all<CardListRow>();
 
   return result.results.map(row => ({
     id: row.id,
