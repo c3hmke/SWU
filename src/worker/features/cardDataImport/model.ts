@@ -10,6 +10,7 @@ export type CardImport = {
   collectorNumber: number;
   name: string;
   imageUrl: string | null;
+  variantOf: number | null;
 };
 
 export type PreparedCardSetImport = {
@@ -24,4 +25,5 @@ export type PreparedCardImport = {
   id: string;
   collectorNumber: number;
   name: string;
+  variantOf: string | null;
 };

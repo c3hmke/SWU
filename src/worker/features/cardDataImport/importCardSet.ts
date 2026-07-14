@@ -40,7 +40,8 @@ export function validateCardSetImport(value: unknown): CardSetImport {
     return {
       collectorNumber,
       name: readRequiredString(cardValue, 'name'),
-      imageUrl: readOptionalString(cardValue, 'imageUrl')
+      imageUrl: readOptionalString(cardValue, 'imageUrl'),
+      variantOf: readOptionalInteger(cardValue, 'variantOf')
     };
   });
 
@@ -56,7 +57,11 @@ export function prepareCardSetImport(cardSet: CardSetImport): PreparedCardSetImp
     cards: cardSet.cards.map(card => ({
       id: createCardId(cardSet.code, card.collectorNumber),
       collectorNumber: card.collectorNumber,
-      name: card.name
+      name: card.name,
+      variantOf:
+        card.variantOf && card.variantOf !== card.collectorNumber
+          ? createCardId(cardSet.code, card.variantOf)
+          : null
     }))
   };
 }
@@ -91,6 +96,19 @@ function readRequiredInteger(record: Record<string, unknown>, key: string): numb
   const value = record[key];
   if (!Number.isInteger(value)) {
     throw new Error(`${key} must be an integer.`);
+  }
+
+  return value as number;
+}
+
+function readOptionalInteger(record: Record<string, unknown>, key: string): number | null {
+  const value = record[key];
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error(`${key} must be an integer when provided.`);
   }
 
   return value as number;

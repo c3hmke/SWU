@@ -77,7 +77,8 @@ async function fetchOfficialCardSet(setIdentifier) {
       cardsByCollectorNumber.set(attributes.cardNumber, {
         collectorNumber: attributes.cardNumber,
         name: attributes.subtitle ? `${attributes.title} - ${attributes.subtitle}` : attributes.title,
-        imageUrl: readOfficialImageUrl(attributes)
+        imageUrl: readOfficialImageUrl(attributes),
+        variantOf: readVariantOfCollectorNumber(attributes)
       });
     }
 
@@ -134,6 +135,12 @@ function readOfficialImageUrl(attributes) {
   );
 }
 
+function readVariantOfCollectorNumber(attributes) {
+  const cardNumber = attributes.variantOf?.data?.attributes?.cardNumber;
+
+  return Number.isInteger(cardNumber) && cardNumber !== attributes.cardNumber ? cardNumber : null;
+}
+
 function buildImportSql(cardSet) {
   const statements = [
     `insert into sets (code, swu_id, name, total_cards)
@@ -147,14 +154,18 @@ function buildImportSql(cardSet) {
 
   for (const card of cardSet.cards) {
     const id = createCardId(cardSet.code, card.collectorNumber);
+    const variantOf = card.variantOf
+      ? createCardId(cardSet.code, card.variantOf)
+      : null;
     statements.push(
-      `insert into cards (id, set_code, collector_number, name, image_url)
-       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)})
+      `insert into cards (id, set_code, collector_number, name, image_url, variant_of)
+       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)})
        on conflict(id) do update set
          set_code = excluded.set_code,
          collector_number = excluded.collector_number,
          name = excluded.name,
          image_url = excluded.image_url,
+         variant_of = excluded.variant_of,
          updated_at = CURRENT_TIMESTAMP;`
     );
   }
