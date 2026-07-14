@@ -69,10 +69,15 @@ defineProps<{
 }
 
 .card-name {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
   font-size: 0.94rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1.2;
+  min-height: calc(0.94rem * 1.2 * 2);
+  overflow: hidden;
 }
 
 strong {

@@ -28,7 +28,7 @@ const needsMoreSearchInput = computed(() => {
 const visibleCards = computed(() => {
   return cards.value;
 });
-const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'High value signals'));
+const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'Chase cards'));
 const highValuePages = computed(() => Array.from({ length: highValuePageCount }, (_, index) => index + 1));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cardListAbortController: AbortController | null = null;
