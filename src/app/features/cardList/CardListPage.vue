@@ -187,6 +187,7 @@ function adjustHighValuePage(delta: number) {
           :image-url="card.proxiedImageUrl ?? card.imageUrl"
           :thumbnail-image-url="card.thumbnailImageUrl"
           :price-nzd="card.lowestPriceNzd"
+          :total-available="card.totalAvailable"
         />
       </div>
     </ConsolePanel>

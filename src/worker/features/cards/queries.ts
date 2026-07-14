@@ -16,6 +16,7 @@ type CardListRow = {
   name: string;
   image_url: string | null;
   lowest_price_nzd: number | null;
+  total_available: number;
 };
 
 type SitemapCardRow = {
@@ -56,14 +57,18 @@ export async function listCardsByChasePrice(
   criteria: CardListSearchCriteria
 ): Promise<CardListItem[]> {
   const query = criteria.name
-    ? `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
+    ? `select c.id, c.name, c.image_url,
+              min(l.price_nzd) as lowest_price_nzd,
+              coalesce(sum(l.quantity), 0) as total_available
        from cards c
        left join listings l on l.card_id = c.id and l.quantity > 0
        where lower(c.name) like '%' || lower(?1) || '%'
        group by c.id, c.name, c.image_url
        order by lowest_price_nzd is null asc, lowest_price_nzd desc, c.name asc
        limit ?2 offset ?3`
-    : `select c.id, c.name, c.image_url, min(l.price_nzd) as lowest_price_nzd
+    : `select c.id, c.name, c.image_url,
+              min(l.price_nzd) as lowest_price_nzd,
+              sum(l.quantity) as total_available
        from cards c
        inner join listings l on l.card_id = c.id
        where l.quantity > 0
@@ -80,7 +85,8 @@ export async function listCardsByChasePrice(
     id: row.id,
     name: row.name,
     imageUrl: row.image_url,
-    lowestPriceNzd: row.lowest_price_nzd
+    lowestPriceNzd: row.lowest_price_nzd,
+    totalAvailable: row.total_available
   }));
 }
 

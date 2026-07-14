@@ -18,6 +18,7 @@ export type CardListItemDto = {
   proxiedImageUrl: string | null;
   thumbnailImageUrl: string | null;
   lowestPriceNzd: number | null;
+  totalAvailable: number;
 };
 
 export type CardListingDto = {

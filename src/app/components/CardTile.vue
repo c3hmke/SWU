@@ -8,6 +8,7 @@ defineProps<{
   imageUrl: string | null;
   thumbnailImageUrl?: string | null;
   priceNzd: number | null;
+  totalAvailable: number;
 }>();
 </script>
 
@@ -15,6 +16,7 @@ defineProps<{
   <RouterLink :to="to" class="card-tile" :class="{ unavailable: priceNzd === null }">
     <CardImageFrame :image-url="thumbnailImageUrl ?? imageUrl" :alt="name" />
     <span class="card-name">{{ name }}</span>
+    <span v-if="priceNzd !== null" class="availability">{{ totalAvailable }} available, from</span>
     <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
   </RouterLink>
 </template>
@@ -78,6 +80,16 @@ strong {
   font-size: 0.96rem;
   letter-spacing: 0.03em;
   white-space: nowrap;
+}
+
+.availability {
+  color: #bae6fd;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin-bottom: -12px;
+  text-transform: uppercase;
 }
 
 .unavailable strong {
