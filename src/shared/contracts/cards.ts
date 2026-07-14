@@ -21,6 +21,11 @@ export type CardListItemDto = {
   totalAvailable: number;
 };
 
+export type CardSetDto = {
+  code: string;
+  name: string;
+};
+
 export type CardListingDto = {
   id: string;
   sellerId: string;

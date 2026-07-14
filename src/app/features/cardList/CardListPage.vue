@@ -1,26 +1,31 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { CardListItemDto } from '../../../shared/contracts/cards';
+import type { CardListItemDto, CardSetDto } from '../../../shared/contracts/cards';
 import AppPage from '../../components/AppPage.vue';
 import CardTile from '../../components/CardTile.vue';
 import ConsoleHeader from '../../components/ConsoleHeader.vue';
 import ConsoleLabel from '../../components/ConsoleLabel.vue';
 import ConsolePanel from '../../components/ConsolePanel.vue';
-import { listCards } from './useCardList';
+import { listCards, listCardSets } from './useCardList';
 
 const route = useRoute();
 const router = useRouter();
 const cards = ref<CardListItemDto[]>([]);
+const cardSets = ref<CardSetDto[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const nameFilter = ref(typeof route.query.name === 'string' ? route.query.name : '');
+const selectedSetCode = ref(typeof route.query.set === 'string' ? route.query.set.toUpperCase() : '');
 const minSearchCharacters = 2;
 const highValuePageCount = 12;
 const highValuePageSize = 12;
 const searchPageSize = 50;
 const highValuePage = ref(Math.max(1, Math.min(highValuePageCount, Number(route.query.page) || 1)));
 const hasNameFilter = computed(() => Boolean(nameFilter.value.trim()));
+const hasSetFilter = computed(() => Boolean(selectedSetCode.value));
+const hasResultFilter = computed(() => hasNameFilter.value || hasSetFilter.value);
+const selectedSet = computed(() => cardSets.value.find(set => set.code === selectedSetCode.value) ?? null);
 const needsMoreSearchInput = computed(() => {
   const trimmedName = nameFilter.value.trim();
   return Boolean(trimmedName) && trimmedName.length < minSearchCharacters;
@@ -28,10 +33,15 @@ const needsMoreSearchInput = computed(() => {
 const visibleCards = computed(() => {
   return cards.value;
 });
-const resultsLabel = computed(() => (nameFilter.value.trim() ? 'Search results' : 'Chase cards'));
+const resultsLabel = computed(() => {
+  if (nameFilter.value.trim()) return 'Search results';
+  if (selectedSet.value) return selectedSet.value.name;
+  return 'Chase cards';
+});
 const highValuePages = computed(() => Array.from({ length: highValuePageCount }, (_, index) => index + 1));
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cardListAbortController: AbortController | null = null;
+let cardSetAbortController: AbortController | null = null;
 
 function createCardPath(card: CardListItemDto): string {
   return `/cards/${card.slug || card.id}`;
@@ -39,6 +49,7 @@ function createCardPath(card: CardListItemDto): string {
 
 async function loadCards() {
   const trimmedName = nameFilter.value.trim();
+  const setCode = selectedSetCode.value;
 
   if (trimmedName && trimmedName.length < minSearchCharacters) {
     cardListAbortController?.abort();
@@ -57,8 +68,9 @@ async function loadCards() {
   try {
     cards.value = await listCards({
       name: trimmedName,
-      page: trimmedName ? 1 : highValuePage.value,
-      pageSize: trimmedName ? searchPageSize : highValuePageSize,
+      setCode,
+      page: hasNameFilter.value ? 1 : hasSetFilter.value ? undefined : highValuePage.value,
+      pageSize: hasNameFilter.value ? searchPageSize : hasSetFilter.value ? undefined : highValuePageSize,
       signal: abortController.signal
     });
   } catch (error) {
@@ -74,12 +86,31 @@ async function loadCards() {
   }
 }
 
-onMounted(loadCards);
+async function loadCardSets() {
+  cardSetAbortController?.abort();
+  const abortController = new AbortController();
+  cardSetAbortController = abortController;
+
+  try {
+    cardSets.value = await listCardSets(abortController.signal);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return;
+    }
+
+    console.error(error);
+  }
+}
+
+onMounted(() => {
+  void loadCardSets();
+  void loadCards();
+});
 
 watch(() => route.query.page, (page) => {
   highValuePage.value = Math.max(1, Math.min(highValuePageCount, Number(page) || 1));
 
-  if (!hasNameFilter.value) {
+  if (!hasResultFilter.value) {
     void loadCards();
   }
 });
@@ -109,6 +140,20 @@ function clearSearch() {
   nameFilter.value = '';
 }
 
+watch(selectedSetCode, () => {
+  highValuePage.value = 1;
+
+  void router.replace({
+    query: {
+      ...route.query,
+      set: selectedSetCode.value || undefined,
+      page: undefined
+    }
+  });
+
+  void loadCards();
+});
+
 function selectHighValuePage(page: number) {
   void router.replace({
     query: {
@@ -132,8 +177,16 @@ function adjustHighValuePage(delta: number) {
 <template>
   <AppPage>
     <ConsolePanel variant="control" aria-label="Card search controls">
-      <ConsoleLabel>Market scanner</ConsoleLabel>
       <div class="search-field">
+        <div class="search-toolbar">
+          <ConsoleLabel>Market scanner</ConsoleLabel>
+          <div class="set-control">
+            <select v-model="selectedSetCode" aria-label="Filter by set">
+              <option value="">All sets</option>
+              <option v-for="set in cardSets" :key="set.code" :value="set.code">{{ set.name }}</option>
+            </select>
+          </div>
+        </div>
         <div class="search-control">
           <input v-model="nameFilter" type="search" placeholder="Search by card name..." aria-label="Search by card name" />
           <button v-if="nameFilter" type="button" @click="clearSearch">⬡</button>
@@ -142,8 +195,8 @@ function adjustHighValuePage(delta: number) {
     </ConsolePanel>
 
     <ConsolePanel aria-live="polite">
-      <ConsoleHeader :label="resultsLabel" :meta="hasNameFilter ? `${visibleCards.length.toString().padStart(2, '0')} targets` : undefined">
-        <div class="page-controls" aria-label="High value signal pages">
+      <ConsoleHeader :label="resultsLabel" :meta="hasResultFilter ? `${visibleCards.length.toString().padStart(2, '0')} targets` : undefined">
+        <div v-if="!hasResultFilter" class="page-controls" aria-label="High value signal pages">
           <button
             type="button"
             class="page-arrow"
@@ -175,7 +228,7 @@ function adjustHighValuePage(delta: number) {
       <p v-else-if="errorMessage" class="error screen-message">{{ errorMessage }}</p>
       <p v-else-if="needsMoreSearchInput" class="muted screen-message">Enter at least {{ minSearchCharacters }} characters.</p>
       <p v-else-if="cards.length === 0" class="muted screen-message">
-        {{ hasNameFilter ? 'No matching cards found.' : 'No cards currently have listings.' }}
+        {{ hasResultFilter ? 'No matching cards found.' : 'No cards currently have listings.' }}
       </p>
 
       <div v-else class="card-grid">
@@ -198,6 +251,13 @@ function adjustHighValuePage(delta: number) {
 .search-field {
   display: grid;
   gap: 8px;
+}
+
+.search-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 .search-field span {
@@ -257,6 +317,43 @@ function adjustHighValuePage(delta: number) {
 
 .search-control button:hover {
   background: rgba(251, 191, 36, 0.22);
+}
+
+.set-control {
+  background:
+    linear-gradient(90deg, rgba(2, 6, 23, 0.88), rgba(30, 41, 59, 0.56)),
+    rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  flex: 0 1 260px;
+  margin-left: auto;
+  min-width: 150px;
+}
+
+.set-control:focus-within {
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+}
+
+.set-control select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, #fbbf24 50%) calc(100% - 18px) 50% / 6px 6px no-repeat,
+    linear-gradient(135deg, #fbbf24 50%, transparent 50%) calc(100% - 12px) 50% / 6px 6px no-repeat,
+    transparent;
+  border: 0;
+  color: #f5f7fb;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.1;
+  min-width: 0;
+  padding: 8px 32px 8px 11px;
+  width: 100%;
+}
+
+.set-control select:focus {
+  outline: none;
 }
 
 .screen-message {
@@ -357,6 +454,17 @@ function adjustHighValuePage(delta: number) {
 }
 
 @media (max-width: 520px) {
+  .search-toolbar {
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+  }
+
+  .set-control {
+    margin-left: 0;
+    width: 100%;
+  }
+
   .page-controls {
     flex-wrap: wrap;
   }

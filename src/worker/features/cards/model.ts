@@ -17,6 +17,11 @@ export type CardListItem = {
   totalAvailable: number;
 };
 
+export type CardSet = {
+  code: string;
+  name: string;
+};
+
 export type CardListing = {
   id: string;
   sellerId: string;
@@ -46,6 +51,7 @@ export type BulkCardListing = CardListing & {
 
 export type CardListSearchCriteria = {
   name: string | null;
-  limit: number;
+  setCode: string | null;
+  limit: number | null;
   offset: number;
 };

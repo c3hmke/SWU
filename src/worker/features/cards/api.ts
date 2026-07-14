@@ -4,6 +4,7 @@ import type {
   BulkCardSearchResponseDto,
   BulkCardSearchSellerCartDto,
   CardListItemDto,
+  CardSetDto,
   CardDetailsDto
 } from '../../../shared/contracts/cards';
 import { createCardSlug, resolveCardIdFromSlug } from '../../../shared/cardSlugs';
@@ -18,6 +19,7 @@ import {
   listActiveListingsByCardId,
   listActiveListingsByCardIds,
   listCardsByChasePrice,
+  listCardSets,
   listCardsByExactNormalizedNames
 } from './queries';
 
@@ -40,23 +42,38 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
 
   if (url.pathname === '/api/cards' && request.method === 'GET') {
     const name = url.searchParams.get('name')?.trim() || null;
-    const pageSize = parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit);
+    const setCode = url.searchParams.get('set')?.trim().toUpperCase() || null;
     const page = parseBoundedInteger(url.searchParams.get('page'), 1, 1, 1_000);
-    const cards = await listCardsByChasePrice(env.DB, { name, limit: pageSize, offset: (page - 1) * pageSize });
+
+    // The page size is set to defaultCardListLimit when searching by name to avoid returning too many results as the user is typing
+    const pageSize =
+        name ? parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit) : setCode
+        ? null : parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit);
+
+    const cards = await listCardsByChasePrice(env.DB, {
+      name, setCode, limit: pageSize, offset: pageSize === null ? 0 : (page - 1) * pageSize
+    });
+
     return createJsonResponse(cards.map(card => mapCardListItemDto(request, card)), 200, request);
+  }
+
+  if (url.pathname === '/api/card-sets' && request.method === 'GET') {
+    const sets = await listCardSets(env.DB);
+    return createJsonResponse(sets.map(mapCardSetDto), 200, request);
   }
 
   if (url.pathname === '/api/cards/bulk-search' && request.method === 'POST') {
     try {
-      const response = await bulkSearchCards(request, env.DB);
-      return createJsonResponse(response, 200, request);
+      return createJsonResponse(
+          await bulkSearchCards(request, env.DB), 200, request
+      );
     } catch (error) {
       if (error instanceof SyntaxError) {
-        return createJsonResponse({ error: 'Invalid JSON body' }, 400, request);
+        return createJsonResponse({error: 'Invalid JSON body'}, 400, request);
       }
 
       if (error instanceof Error && (error.message === 'Invalid card names' || error.message === 'Too many card names')) {
-        return createJsonResponse({ error: error.message }, 400, request);
+        return createJsonResponse({error: error.message}, 400, request);
       }
 
       console.error(error);
@@ -66,19 +83,20 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
 
   const match = url.pathname.match(/^\/api\/cards\/([^/]+)$/);
 
-  if (!match || request.method !== 'GET') {
+  if (!match || request.method !== 'GET')
     return createJsonResponse({ error: 'Not found' }, 404, request);
-  }
 
   try {
-    const card = await getCardDetails(env.DB, decodeURIComponent(match[1]));
-    return createJsonResponse(card, 200, request);
+    return createJsonResponse(
+        await getCardDetails(env.DB, decodeURIComponent(match[1])), 200, request
+    );
   } catch (error) {
     if (error instanceof NotFoundError) {
-      return createJsonResponse({ error: error.message }, 404, request);
+      return createJsonResponse({error: error.message}, 404, request);
     }
 
     console.error(error);
+
     return createJsonResponse({ error: 'Internal server error' }, 500, request);
   }
 }
@@ -89,6 +107,13 @@ function mapCardListItemDto(request: Request, card: Awaited<ReturnType<typeof li
     slug: createCardSlug(card),
     proxiedImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl) : null,
     thumbnailImageUrl: card.imageUrl ? createProxiedImageUrl(request, card.imageUrl, 'thumbnail') : null
+  };
+}
+
+function mapCardSetDto(set: Awaited<ReturnType<typeof listCardSets>>[number]): CardSetDto {
+  return {
+    code: set.code,
+    name: set.name
   };
 }
 

@@ -1,4 +1,4 @@
-import type { BulkCardListing, Card, CardListItem, CardListSearchCriteria, CardListing } from './model';
+import type { BulkCardListing, Card, CardListItem, CardListSearchCriteria, CardListing, CardSet } from './model';
 
 type CardRow = {
   id: string;
@@ -17,6 +17,11 @@ type CardListRow = {
   image_url: string | null;
   lowest_price_nzd: number | null;
   total_available: number;
+};
+
+type CardSetRow = {
+  code: string;
+  name: string;
 };
 
 type SitemapCardRow = {
@@ -56,16 +61,30 @@ export async function listCardsByChasePrice(
   db: D1Database,
   criteria: CardListSearchCriteria
 ): Promise<CardListItem[]> {
-  const query = criteria.name
+  const hasResultFilter = Boolean(criteria.name || criteria.setCode);
+  const conditions: string[] = [];
+  const bindings: Array<string | number> = [];
+
+  if (criteria.name) {
+    bindings.push(criteria.name);
+    conditions.push(`lower(c.name) like '%' || lower(?${bindings.length}) || '%'`);
+  }
+
+  if (criteria.setCode) {
+    bindings.push(criteria.setCode);
+    conditions.push(`c.set_code = ?${bindings.length}`);
+  }
+
+  const query = hasResultFilter
     ? `select c.id, c.name, c.image_url,
               min(l.price_nzd) as lowest_price_nzd,
               coalesce(sum(l.quantity), 0) as total_available
        from cards c
        left join listings l on l.card_id = c.id and l.quantity > 0
-       where lower(c.name) like '%' || lower(?1) || '%'
+       ${conditions.length ? `where ${conditions.join(' and ')}` : ''}
        group by c.id, c.name, c.image_url
        order by lowest_price_nzd is null asc, lowest_price_nzd desc, c.name asc
-       limit ?2 offset ?3`
+       ${criteria.limit === null ? '' : `limit ?${bindings.length + 1} offset ?${bindings.length + 2}`}`
     : `select c.id, c.name, c.image_url,
               min(l.price_nzd) as lowest_price_nzd,
               sum(l.quantity) as total_available
@@ -76,9 +95,10 @@ export async function listCardsByChasePrice(
        order by lowest_price_nzd desc, c.name asc
        limit ?1 offset ?2`;
 
-  const bindings = criteria.name
-    ? [criteria.name, criteria.limit, criteria.offset]
-    : [criteria.limit, criteria.offset];
+  if (criteria.limit !== null) {
+    bindings.push(criteria.limit, criteria.offset);
+  }
+
   const result = await db.prepare(query).bind(...bindings).all<CardListRow>();
 
   return result.results.map(row => ({
@@ -87,6 +107,21 @@ export async function listCardsByChasePrice(
     imageUrl: row.image_url,
     lowestPriceNzd: row.lowest_price_nzd,
     totalAvailable: row.total_available
+  }));
+}
+
+export async function listCardSets(db: D1Database): Promise<CardSet[]> {
+  const result = await db
+    .prepare(
+      `select code, name
+       from sets
+       order by swu_id desc, code desc`
+    )
+    .all<CardSetRow>();
+
+  return result.results.map(row => ({
+    code: row.code,
+    name: row.name
   }));
 }
 

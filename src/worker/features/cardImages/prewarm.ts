@@ -11,7 +11,7 @@ export type CardImagePrewarmResult = Record<PrewarmStatus, number> & {
 };
 
 export async function prewarmHighValueCardImages(db: D1Database): Promise<CardImagePrewarmResult> {
-  const cards = await listCardsByChasePrice(db, { name: null, limit: DEFAULT_PREWARM_LIMIT, offset: 0 });
+  const cards = await listCardsByChasePrice(db, { name: null, setCode: null, limit: DEFAULT_PREWARM_LIMIT, offset: 0 });
   const imageUrls = cards
     .map(card => card.imageUrl)
     .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
