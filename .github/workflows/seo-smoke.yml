@@ -1,0 +1,36 @@
+name: SEO Smoke Check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  seo-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Wait for Pages deployment
+        run: sleep 90
+
+      - name: Check production SEO
+        run: |
+          for attempt in 1 2 3; do
+            if npm run test:seo; then
+              exit 0
+            fi
+
+            echo "SEO smoke check failed on attempt ${attempt}; waiting before retry..."
+            sleep 30
+          done
+
+          npm run test:seo

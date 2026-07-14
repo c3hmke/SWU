@@ -10,6 +10,7 @@
     "app:typecheck": "vue-tsc -p tsconfig.app.json --noEmit",
     "app:build": "npm run app:typecheck && vite build",
     "app:preview": "vite preview --host 0.0.0.0",
+    "test:seo": "node tests/seo/check-production-seo.mjs",
     "functions:typecheck": "tsc -p tsconfig.functions.json --noEmit",
     "worker:typecheck": "tsc -p tsconfig.worker.json --noEmit",
     "worker:dev": "wrangler dev src/worker/index.ts",
