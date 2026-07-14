@@ -1,10 +1,8 @@
-import { createShopifyCollectionAdapter } from '../integrations/shopifyIntegration';
+import { createStorepassAdapter } from '../integrations/storepassIntegration';
 
-export const goblinGamesAdapter = createShopifyCollectionAdapter({
-  key: 'goblingames-shopify',
+export const goblinGamesAdapter = createStorepassAdapter({
+  key: 'goblingames-storepass',
   sellerName: 'Goblin Games',
-  baseUrl: 'https://goblingames.nz',
-  collectionHandle: 'star-wars-unlimited-single-cards',
-  productType: 'Star Wars: Unlimited Single',
-  source: 'products-json'
+  storeId: 'nF8IQAaVFy',
+  productLine: 'Star Wars Unlimited'
 });
