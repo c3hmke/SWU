@@ -173,7 +173,7 @@ function parseQuantity(html: string): number {
 
 function parseCurrentCatalogTiles(html: string, setNamesByCode: SetNamesByCode): RogueOpsTile[] {
   const tiles: RogueOpsTile[] = [];
-  const imagePattern = /<img\b[^>]*\balt=(["'])(Image:\s*[\s\S]*?)\1[^>]*>/gi;
+  const imagePattern = /<img\b[^>]*\balt=(["'])([^"']*(?:—|&mdash;)[^"']*)\1[^>]*>/gi;
   const matches = [...html.matchAll(imagePattern)];
 
   for (let index = 0; index < matches.length; index += 1) {
@@ -214,7 +214,7 @@ function parseCurrentCatalogTiles(html: string, setNamesByCode: SetNamesByCode):
 }
 
 function parseImageAlt(value: string): { cardName: string; setCode: string; variant: string | null } | null {
-  const match = value.match(/^Image:\s*(.*?)\s+(?:—|&mdash;)\s+([A-Z0-9]+)\s+(.+)$/);
+  const match = value.match(/^(?:Image:\s*)?(.*?)\s+(?:—|&mdash;)\s+([A-Z0-9]+)\s+(.+)$/);
 
   if (!match) {
     return null;
