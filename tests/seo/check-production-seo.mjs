@@ -49,11 +49,29 @@ async function checkCardPage(cardPath) {
   assertIncludes(response.body, `<meta property="og:url" content="${baseUrl}${cardPath}"`, 'card page should include Open Graph URL');
   assertMatches(response.body, /<meta property="og:image" content="https?:\/\/[^"]+"/, 'card page should include Open Graph image');
   assertIncludes(response.body, '<script type="application/ld+json">', 'card page should include JSON-LD');
-  assertIncludes(response.body, '"@type":"Product"', 'card JSON-LD should describe a Product');
+  const structuredData = extractStructuredData(response.body);
+  assert(
+    structuredData['@type'] === 'WebPage' || structuredData['@type'] === 'Product',
+    'card JSON-LD should describe a WebPage or Product'
+  );
+  if (structuredData['@type'] === 'Product') {
+    assert(structuredData.offers, 'Product JSON-LD should include offers');
+  }
   assertIncludes(response.body, '<script type="module"', 'card page should still include the app bundle');
   assert(!response.body.includes('api.swu.nz/api/cards'), 'card page metadata should not canonicalize API URLs');
   assert(!response.body.includes('workers.dev'), 'card page metadata should not contain workers.dev URLs');
   checks.push(`${cardPath} initial HTML contains card-specific SEO metadata`);
+}
+
+function extractStructuredData(html) {
+  const match = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
+  assert(match, 'card page should include parseable JSON-LD');
+
+  try {
+    return JSON.parse(match[1]);
+  } catch (error) {
+    throw new Error(`card JSON-LD should be valid JSON: ${error.message}`);
+  }
 }
 
 function extractFirstCardPath(sitemapXml) {

@@ -134,6 +134,27 @@ function createDescription(card: CardDetailsDto): string {
 
 function createStructuredData(card: CardDetailsDto, canonicalUrl: string, imageUrl: string): Record<string, unknown> {
   const prices = card.listings.map(listing => listing.priceNzd);
+
+  // Google's Product rich results require an offer, review, or aggregate rating.
+  // An unlisted card is a catalogue entry rather than a purchasable product, so
+  // describe the page without emitting an incomplete Product entity.
+  if (prices.length === 0) {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: card.name,
+      description: createDescription(card),
+      image: imageUrl,
+      url: canonicalUrl,
+      about: {
+        '@type': 'Thing',
+        name: card.name,
+        identifier: card.id,
+        category: 'Star Wars: Unlimited trading card'
+      }
+    };
+  }
+
   const structuredData: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -148,17 +169,15 @@ function createStructuredData(card: CardDetailsDto, canonicalUrl: string, imageU
     }
   };
 
-  if (prices.length > 0) {
-    structuredData.offers = {
-      '@type': 'AggregateOffer',
-      priceCurrency: 'NZD',
-      lowPrice: Math.min(...prices).toFixed(2),
-      highPrice: Math.max(...prices).toFixed(2),
-      offerCount: card.listings.length,
-      availability: 'https://schema.org/InStock',
-      url: canonicalUrl
-    };
-  }
+  structuredData.offers = {
+    '@type': 'AggregateOffer',
+    priceCurrency: 'NZD',
+    lowPrice: Math.min(...prices).toFixed(2),
+    highPrice: Math.max(...prices).toFixed(2),
+    offerCount: card.listings.length,
+    availability: 'https://schema.org/InStock',
+    url: canonicalUrl
+  };
 
   return structuredData;
 }
