@@ -11,6 +11,7 @@ import { createSitemapResponse } from './features/seo/sitemap';
 
 const SCHEDULED_SELLER_SLUGS = [
   'calico-keep',
+  'card-merchant-ponsonby',
   'rogue-ops',
   'spellbound-games',
   'tcg-collector-nz',
