@@ -1,3 +1,19 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+
+const shopifyNoticeStorageKey = 'shopify-quantity-notice-v2-dismissed';
+const showShopifyNotice = ref(false);
+
+onMounted(() => {
+  showShopifyNotice.value = localStorage.getItem(shopifyNoticeStorageKey) !== 'true';
+});
+
+function dismissShopifyNotice() {
+  showShopifyNotice.value = false;
+  localStorage.setItem(shopifyNoticeStorageKey, 'true');
+}
+</script>
+
 <template>
   <div class="app-shell" spellcheck="false">
     <header class="site-header">
@@ -29,6 +45,18 @@
     </aside>
 
     <main>
+      <aside v-if="showShopifyNotice" class="site-notice" role="status">
+        <div>
+          <strong>Shopify stock quantity notice</strong>
+          <p>
+            Due to recent Shopify changes, card quantities from Shopify stores may not be tracked accurately.
+            We’re working on a solution.
+          </p>
+        </div>
+        <button type="button" aria-label="Dismiss Shopify stock quantity notice" @click="dismissShopifyNotice">
+          &times;
+        </button>
+      </aside>
       <RouterView />
     </main>
   </div>
