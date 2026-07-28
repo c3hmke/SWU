@@ -170,12 +170,12 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
   const matchedNormalizedNames = new Set(matchedCards.map(card => normalizeCardName(card.name)));
   const matchedListings = await listActiveListingsByCardIds(db, matchedCards.map(card => card.id));
   const cards = selectRepresentativeCards(names, matchedCards, matchedListings);
-  const requestedQuantityByCardId = new Map(
-    cards.map(card => [card.id, names.find(name => name.normalizedName === normalizeCardName(card.name))?.quantity ?? 1])
-  );
+  const requestedQuantityByName = new Map(names.map(name => [name.normalizedName, name.quantity]));
+  const normalizedNameByCardId = new Map(cards.map(card => [card.id, normalizeCardName(card.name)]));
   const allocation = allocateListings(
-    matchedListings.filter(listing => requestedQuantityByCardId.has(listing.cardId)),
-    requestedQuantityByCardId
+    matchedListings.filter(listing => normalizedNameByCardId.has(listing.cardId)),
+    normalizedNameByCardId,
+    requestedQuantityByName
   );
   const adapters = createAdapterRegistry();
 
@@ -185,7 +185,7 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
       slug: createCardSlug(card),
       name: card.name,
       imageUrl: card.imageUrl,
-      requestedQuantity: requestedQuantityByCardId.get(card.id) ?? 1,
+      requestedQuantity: requestedQuantityByName.get(normalizeCardName(card.name)) ?? 1,
       missingQuantity: allocation.remainingQuantityByCardId.get(card.id) ?? 0
     })),
     listings: allocation.listings.map(mapBulkListingDto),
@@ -198,13 +198,15 @@ async function bulkSearchCards(request: Request, db: D1Database): Promise<BulkCa
 
 function allocateListings(
   listings: Awaited<ReturnType<typeof listActiveListingsByCardIds>>,
-  requestedQuantityByCardId: Map<string, number>
+  normalizedNameByCardId: Map<string, string>,
+  requestedQuantityByName: Map<string, number>
 ): { listings: BulkSearchListing[]; remainingQuantityByCardId: Map<string, number> } {
-  const remainingQuantityByCardId = new Map(requestedQuantityByCardId);
+  const remainingQuantityByName = new Map(requestedQuantityByName);
   const allocatedListings: BulkSearchListing[] = [];
 
   for (const listing of [...listings].sort(compareListingsForAllocation)) {
-    const remainingQuantity = remainingQuantityByCardId.get(listing.cardId) ?? 0;
+    const normalizedName = normalizedNameByCardId.get(listing.cardId);
+    const remainingQuantity = normalizedName ? remainingQuantityByName.get(normalizedName) ?? 0 : 0;
     const allocatedQuantity = Math.min(remainingQuantity, listing.quantity);
 
     if (allocatedQuantity <= 0) {
@@ -212,7 +214,16 @@ function allocateListings(
     }
 
     allocatedListings.push({ ...listing, requestedQuantity: allocatedQuantity });
-    remainingQuantityByCardId.set(listing.cardId, remainingQuantity - allocatedQuantity);
+    remainingQuantityByName.set(normalizedName!, remainingQuantity - allocatedQuantity);
+  }
+
+  const remainingQuantityByCardId = new Map<string, number>();
+  const reportedNames = new Set<string>();
+
+  for (const [cardId, normalizedName] of normalizedNameByCardId) {
+    const remainingQuantity = remainingQuantityByName.get(normalizedName) ?? 0;
+    remainingQuantityByCardId.set(cardId, reportedNames.has(normalizedName) ? 0 : remainingQuantity);
+    reportedNames.add(normalizedName);
   }
 
   return { listings: allocatedListings, remainingQuantityByCardId };
