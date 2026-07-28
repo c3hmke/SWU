@@ -201,12 +201,19 @@ function allocateListings(
   normalizedNameByCardId: Map<string, string>,
   requestedQuantityByName: Map<string, number>
 ): { listings: BulkSearchListing[]; remainingQuantityByCardId: Map<string, number> } {
-  const remainingQuantityByName = new Map(requestedQuantityByName);
+  const remainingQuantityBySellerAndName = new Map<string, number>();
   const allocatedListings: BulkSearchListing[] = [];
 
   for (const listing of [...listings].sort(compareListingsForAllocation)) {
     const normalizedName = normalizedNameByCardId.get(listing.cardId);
-    const remainingQuantity = normalizedName ? remainingQuantityByName.get(normalizedName) ?? 0 : 0;
+    if (!normalizedName) {
+      continue;
+    }
+
+    const allocationKey = `${listing.sellerId}\0${normalizedName}`;
+    const remainingQuantity = remainingQuantityBySellerAndName.get(allocationKey)
+      ?? requestedQuantityByName.get(normalizedName)
+      ?? 0;
     const allocatedQuantity = Math.min(remainingQuantity, listing.quantity);
 
     if (allocatedQuantity <= 0) {
@@ -214,7 +221,18 @@ function allocateListings(
     }
 
     allocatedListings.push({ ...listing, requestedQuantity: allocatedQuantity });
-    remainingQuantityByName.set(normalizedName!, remainingQuantity - allocatedQuantity);
+    remainingQuantityBySellerAndName.set(allocationKey, remainingQuantity - allocatedQuantity);
+  }
+
+  const remainingQuantityByName = new Map(requestedQuantityByName);
+
+  for (const [allocationKey, remainingQuantity] of remainingQuantityBySellerAndName) {
+    const normalizedName = allocationKey.slice(allocationKey.indexOf('\0') + 1);
+    const currentRemainingQuantity = remainingQuantityByName.get(normalizedName);
+
+    if (currentRemainingQuantity === undefined || remainingQuantity < currentRemainingQuantity) {
+      remainingQuantityByName.set(normalizedName, remainingQuantity);
+    }
   }
 
   const remainingQuantityByCardId = new Map<string, number>();
