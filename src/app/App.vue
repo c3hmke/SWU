@@ -42,6 +42,14 @@ function dismissShopifyNotice() {
           <span class="sponsor-action">Interested?</span>
         </span>
       </RouterLink>
+      <a
+        class="coffee-link"
+        href="https://buymeacoffee.com/c3hmke"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Buy me a coffee?
+      </a>
     </aside>
 
     <main>
