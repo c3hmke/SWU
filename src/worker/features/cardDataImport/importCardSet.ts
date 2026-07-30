@@ -41,7 +41,8 @@ export function validateCardSetImport(value: unknown): CardSetImport {
       collectorNumber,
       name: readRequiredString(cardValue, 'name'),
       imageUrl: readOptionalString(cardValue, 'imageUrl'),
-      variantOf: readOptionalInteger(cardValue, 'variantOf')
+      variantOf: readOptionalInteger(cardValue, 'variantOf'),
+      variantType: readOptionalVariantType(cardValue, index)
     };
   });
 
@@ -61,8 +62,40 @@ export function prepareCardSetImport(cardSet: CardSetImport): PreparedCardSetImp
       variantOf:
         card.variantOf && card.variantOf !== card.collectorNumber
           ? createCardId(cardSet.code, card.variantOf)
-          : null
+          : null,
+      variantTypeId: card.variantType?.id ?? null
     }))
+  };
+}
+
+function readOptionalVariantType(
+  card: Record<string, unknown>,
+  cardIndex: number
+): CardSetImport['cards'][number]['variantType'] {
+  const value = card.variantType;
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`cards[${cardIndex}].variantType must be an object when provided.`);
+  }
+
+  const foil = value.foil;
+  if (foil !== undefined && foil !== null && typeof foil !== 'boolean') {
+    throw new Error(`cards[${cardIndex}].variantType.foil must be a boolean when provided.`);
+  }
+
+  const sortValue = value.sortValue;
+  if (sortValue !== undefined && sortValue !== null && !Number.isInteger(sortValue)) {
+    throw new Error(`cards[${cardIndex}].variantType.sortValue must be an integer when provided.`);
+  }
+
+  return {
+    id: readRequiredString(value, 'id'),
+    name: readRequiredString(value, 'name'),
+    foil: foil ?? null,
+    sortValue: (sortValue as number | undefined) ?? null
   };
 }
 

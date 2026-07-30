@@ -7,6 +7,7 @@ export type Card = {
   totalCards: number | null;
   imageUrl: string | null;
   variantOf: string | null;
+  variantTypeId: string | null;
 };
 
 export type CardListItem = {

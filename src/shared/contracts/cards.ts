@@ -7,6 +7,8 @@ export type CardDetailsDto = {
   collectorNumber: number;
   totalCards: number | null;
   imageUrl: string | null;
+  variantOf: string | null;
+  variantTypeId: string | null;
   listings: CardListingDto[];
 };
 

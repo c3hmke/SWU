@@ -50,6 +50,7 @@ async function fetchOfficialCardSet(setIdentifier) {
     url.searchParams.set('pagination[page]', page.toString());
     url.searchParams.set('pagination[pageSize]', pageSize.toString());
     url.searchParams.set('filters[expansion][id][$eq]', expansion.id.toString());
+    url.searchParams.set('populate[variantTypes]', '*');
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -78,7 +79,8 @@ async function fetchOfficialCardSet(setIdentifier) {
         collectorNumber: attributes.cardNumber,
         name: attributes.subtitle ? `${attributes.title} - ${attributes.subtitle}` : attributes.title,
         imageUrl: readOfficialImageUrl(attributes),
-        variantOf: readVariantOfCollectorNumber(attributes)
+        variantOf: readVariantOfCollectorNumber(attributes),
+        variantType: readOfficialVariantType(attributes, expansion.code, attributes.cardNumber)
       });
     }
 
@@ -141,6 +143,31 @@ function readVariantOfCollectorNumber(attributes) {
   return Number.isInteger(cardNumber) && cardNumber !== attributes.cardNumber ? cardNumber : null;
 }
 
+function readOfficialVariantType(attributes, setCode, collectorNumber) {
+  const rows = Array.isArray(attributes.variantTypes?.data)
+    ? attributes.variantTypes.data
+    : [];
+
+  if (rows.length > 1) {
+    throw new Error(
+      `Card ${setCode}${collectorNumber.toString().padStart(3, '0')} has multiple variant types; ` +
+      'the current schema supports one.'
+    );
+  }
+
+  const attributesValue = rows[0]?.attributes;
+  if (!attributesValue?.variantId || !attributesValue.name) {
+    return null;
+  }
+
+  return {
+    id: attributesValue.variantId,
+    name: attributesValue.name,
+    foil: typeof attributesValue.foil === 'boolean' ? attributesValue.foil : null,
+    sortValue: Number.isInteger(attributesValue.sortValue) ? attributesValue.sortValue : null
+  };
+}
+
 function buildImportSql(cardSet) {
   const statements = [
     `insert into sets (code, swu_id, name, total_cards)
@@ -152,20 +179,39 @@ function buildImportSql(cardSet) {
        updated_at = CURRENT_TIMESTAMP;`
   ];
 
+  const variantTypes = new Map(
+    cardSet.cards
+      .filter(card => card.variantType)
+      .map(card => [card.variantType.id, card.variantType])
+  );
+
+  for (const variantType of variantTypes.values()) {
+    statements.push(
+      `insert into card_variant_types (id, name, foil, sort_value)
+       values (${sqlString(variantType.id)}, ${sqlString(variantType.name)}, ${sqlNullableBoolean(variantType.foil)}, ${sqlNullableInteger(variantType.sortValue)})
+       on conflict(id) do update set
+         name = excluded.name,
+         foil = excluded.foil,
+         sort_value = excluded.sort_value,
+         updated_at = CURRENT_TIMESTAMP;`
+    );
+  }
+
   for (const card of cardSet.cards) {
     const id = createCardId(cardSet.code, card.collectorNumber);
     const variantOf = card.variantOf
       ? createCardId(cardSet.code, card.variantOf)
       : null;
     statements.push(
-      `insert into cards (id, set_code, collector_number, name, image_url, variant_of)
-       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)})
+      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id)
+       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)})
        on conflict(id) do update set
          set_code = excluded.set_code,
          collector_number = excluded.collector_number,
          name = excluded.name,
          image_url = excluded.image_url,
          variant_of = excluded.variant_of,
+         variant_type_id = excluded.variant_type_id,
          updated_at = CURRENT_TIMESTAMP;`
     );
   }
@@ -183,4 +229,12 @@ function sqlString(value) {
 
 function sqlNullableString(value) {
   return value === null ? 'null' : sqlString(value);
+}
+
+function sqlNullableBoolean(value) {
+  return value === null ? 'null' : value ? '1' : '0';
+}
+
+function sqlNullableInteger(value) {
+  return value === null ? 'null' : value.toString();
 }

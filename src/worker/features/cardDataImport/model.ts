@@ -11,6 +11,14 @@ export type CardImport = {
   name: string;
   imageUrl: string | null;
   variantOf: number | null;
+  variantType: CardVariantTypeImport | null;
+};
+
+export type CardVariantTypeImport = {
+  id: string;
+  name: string;
+  foil: boolean | null;
+  sortValue: number | null;
 };
 
 export type PreparedCardSetImport = {
@@ -26,4 +34,5 @@ export type PreparedCardImport = {
   collectorNumber: number;
   name: string;
   variantOf: string | null;
+  variantTypeId: string | null;
 };

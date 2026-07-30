@@ -9,6 +9,7 @@ type CardRow = {
   total_cards: number | null;
   image_url: string | null;
   variant_of: string | null;
+  variant_type_id: string | null;
 };
 
 type CardListRow = {
@@ -129,7 +130,7 @@ export async function getCardById(db: D1Database, id: string): Promise<Card | nu
   const row = await db
     .prepare(
       `select c.id, c.name, c.set_code, s.name as set_name,
-              c.collector_number, s.total_cards, c.image_url, c.variant_of
+              c.collector_number, s.total_cards, c.image_url, c.variant_of, c.variant_type_id
        from cards c
        left join sets s on s.code = c.set_code
        where c.id = ?1`
@@ -161,7 +162,7 @@ export async function listCardsByExactNormalizedNames(db: D1Database, normalized
   const result = await db
     .prepare(
       `select c.id, c.name, c.set_code, s.name as set_name,
-              c.collector_number, s.total_cards, c.image_url, c.variant_of
+              c.collector_number, s.total_cards, c.image_url, c.variant_of, c.variant_type_id
        from cards c
        left join sets s on s.code = c.set_code
        where lower(trim(c.name)) in (${placeholders})
@@ -238,7 +239,8 @@ function mapCard(row: CardRow): Card {
     collectorNumber: row.collector_number,
     totalCards: row.total_cards,
     imageUrl: row.image_url,
-    variantOf: row.variant_of
+    variantOf: row.variant_of,
+    variantTypeId: row.variant_type_id
   };
 }
 
