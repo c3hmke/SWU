@@ -86,10 +86,19 @@ function parseCardListLine(line: string): BulkCardSearchRequestCardDto | null {
   const cleanLine = line
       .replace(/^\s*(?:[-*]|\d+[.)])\s*/, '')
       .trim()
-      .replace(/\s+/g, ' ');
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\|\s*/g, ' - ');
 
   if (!cleanLine) {
     return null;
+  }
+
+  const trailingQuantityMatch = cleanLine.match(/^(.+\S)\s+x(\d+)$/i);
+  if (trailingQuantityMatch) {
+    const quantity = parseQuantityToken(`x${trailingQuantityMatch[2]}`);
+    if (quantity) {
+      return { name: trailingQuantityMatch[1], quantity };
+    }
   }
 
   const firstSpaceIndex = cleanLine.indexOf(' ');
@@ -185,7 +194,7 @@ function createListingCardPath(listing: { cardId: string; cardSlug?: string }): 
 
         <aside class="upload-console">
           <span class="console-kicker">Input stream</span>
-          <p>Paste a deck list or upload a plain text list. Use quantities like 2 Waylay, 2x Waylay, or x2 Waylay.</p>
+          <p>Paste a deck list or upload a plain text list. Use quantities like 2 Waylay, 2x Waylay, x2 Waylay, or Waylay x2.</p>
           <input ref="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" @change="handleFileUpload" />
           <div class="lookup-stats">
             <strong>{{ parsedCards.length.toString().padStart(2, '0') }}</strong>
