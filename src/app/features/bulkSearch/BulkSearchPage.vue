@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type {
   BulkCardSearchListingDto,
   BulkCardSearchRequestCardDto,
@@ -28,12 +28,25 @@ type SellerGroup = {
 };
 
 const maxBulkSearchNames = 150;
+const bulkSearchInputStorageKey = 'bulk-search-input';
 
 const rawCardNames = ref('');
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 const result = ref<BulkCardSearchResponseDto | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+
+onMounted(() => {
+  rawCardNames.value = sessionStorage.getItem(bulkSearchInputStorageKey) ?? '';
+});
+
+watch(rawCardNames, value => {
+  if (value) {
+    sessionStorage.setItem(bulkSearchInputStorageKey, value);
+  } else {
+    sessionStorage.removeItem(bulkSearchInputStorageKey);
+  }
+});
 
 const parsedCards = computed(() => parseCardList(rawCardNames.value));
 const matchedCardsWithoutListings = computed(() =>
