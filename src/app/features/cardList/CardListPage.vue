@@ -7,6 +7,7 @@ import CardTile from '../../components/CardTile.vue';
 import ConsoleHeader from '../../components/ConsoleHeader.vue';
 import ConsoleLabel from '../../components/ConsoleLabel.vue';
 import ConsolePanel from '../../components/ConsolePanel.vue';
+import FloatingTooltip from '../../components/FloatingTooltip.vue';
 import {
   adjustBulkSearchCardQuantity,
   getBulkSearchQuantities,
@@ -208,7 +209,14 @@ function adjustBulkQuantity(name: string, delta: number) {
         </div>
         <div class="search-control">
           <input v-model="nameFilter" type="search" placeholder="Search by card name..." aria-label="Search by card name" />
-          <button v-if="nameFilter" type="button" @click="clearSearch">⬡</button>
+          <FloatingTooltip v-if="nameFilter" v-slot="{ tooltipId }" text="Clear">
+            <button
+              type="button"
+              aria-label="Clear search"
+              :aria-describedby="tooltipId"
+              @click="clearSearch"
+            >⬡</button>
+          </FloatingTooltip>
         </div>
       </div>
     </ConsolePanel>
