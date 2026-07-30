@@ -3,9 +3,17 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import type { CardDetailsDto } from '../../../shared/contracts/cards';
 import AppPage from '../../components/AppPage.vue';
+import BulkQuantityControls from '../../components/BulkQuantityControls.vue';
 import CardImageFrame from '../../components/CardImageFrame.vue';
 import ConsolePanel from '../../components/ConsolePanel.vue';
 import { applyPageMetadata } from '../../metadata';
+import {
+  adjustBulkSearchCardQuantity,
+  getBulkSearchQuantities,
+  normalizeCardName,
+  readBulkSearchInput,
+  writeBulkSearchInput
+} from '../bulkSearch/bulkSearchInput';
 import CardListingTable from './CardListingTable.vue';
 import { getCardDetails } from './useCardDetails';
 
@@ -19,6 +27,7 @@ const card = ref<CardDetailsDto | null>(null);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 const titleEl = ref<HTMLElement | null>(null);
+const bulkQuantity = ref(0);
 
 const cardNameParts = computed(() => splitCardName(card.value?.name ?? ''));
 
@@ -31,6 +40,8 @@ async function loadCard() {
 
   try {
     card.value = await getCardDetails(props.cardId);
+    bulkQuantity.value = getBulkSearchQuantities(readBulkSearchInput())
+      .get(normalizeCardName(card.value.name)) ?? 0;
     replaceCardPathWithCanonicalSlug(card.value);
     applyCardMetadata(card.value);
   } catch (error) {
@@ -109,6 +120,15 @@ function fitCardTitle() {
   });
 }
 
+function adjustBulkQuantity(delta: number) {
+  if (!card.value) return;
+
+  const updatedInput = adjustBulkSearchCardQuantity(readBulkSearchInput(), card.value.name, delta);
+  writeBulkSearchInput(updatedInput);
+  bulkQuantity.value = getBulkSearchQuantities(updatedInput)
+    .get(normalizeCardName(card.value.name)) ?? 0;
+}
+
 onMounted(() => {
   void loadCard();
   window.addEventListener('resize', fitCardTitle);
@@ -140,6 +160,13 @@ watch(() => props.cardId, loadCard);
           <p v-if="cardNameParts.subtitle" class="card-subtitle">{{ cardNameParts.subtitle }}</p>
         </div>
       </div>
+      <BulkQuantityControls
+        class="details-bulk-controls"
+        :name="card.name"
+        :quantity="bulkQuantity"
+        @increment="adjustBulkQuantity(1)"
+        @decrement="adjustBulkQuantity(-1)"
+      />
     </ConsolePanel>
 
     <CardListingTable :listings="card.listings" />
@@ -153,6 +180,13 @@ watch(() => props.cardId, loadCard);
   align-self: start;
   min-height: 220px;
   padding: clamp(12px, 2vw, 18px) clamp(8px, 2vw, 18px);
+}
+
+.details-bulk-controls {
+  bottom: 18px;
+  position: absolute;
+  right: 24px;
+  z-index: 2;
 }
 
 .summary-readout {
@@ -275,6 +309,10 @@ watch(() => props.cardId, loadCard);
 
   .eyebrow {
     text-align: left;
+  }
+
+  .card-summary {
+    padding-bottom: 36px;
   }
 }
 </style>

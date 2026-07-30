@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CardImageFrame from './CardImageFrame.vue';
+import BulkQuantityControls from './BulkQuantityControls.vue';
 import { formatPrice } from '../shared/formatters';
 
 defineProps<{
@@ -26,20 +27,13 @@ defineEmits<{
       <span v-if="priceNzd !== null" class="availability">{{ totalAvailable }} available, from</span>
       <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
     </RouterLink>
-    <div class="bulk-quantity-controls" :class="{ active: bulkQuantity }">
-      <template v-if="bulkQuantity">
-        <button
-          type="button"
-          :aria-label="`Remove one ${name} from bulk search`"
-          @click="$emit('decrementBulkQuantity')"
-        >−</button>
-        <span :aria-label="`${bulkQuantity} in bulk search`">{{ bulkQuantity }}</span>
-      </template>
-      <button
-        type="button"
-        :aria-label="`Add one ${name} to bulk search`"
-        @click="$emit('incrementBulkQuantity')"
-      >+</button>
+    <div class="tile-bulk-controls" :class="{ active: bulkQuantity }">
+      <BulkQuantityControls
+        :name="name"
+        :quantity="bulkQuantity ?? 0"
+        @increment="$emit('incrementBulkQuantity')"
+        @decrement="$emit('decrementBulkQuantity')"
+      />
     </div>
   </article>
 </template>
@@ -131,20 +125,13 @@ strong {
   text-transform: uppercase;
 }
 
-.bulk-quantity-controls {
+.tile-bulk-controls {
   display: none;
 }
 
 @media (hover: hover) and (pointer: fine) and (min-width: 801px) {
-  .bulk-quantity-controls {
-    align-items: center;
-    background: rgba(2, 6, 23, 0.92);
-    border: 1px solid rgba(125, 211, 252, 0.48);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.46);
-    color: #f8fafc;
+  .tile-bulk-controls {
     display: flex;
-    font-size: 0.82rem;
-    font-weight: 900;
     opacity: 0;
     position: absolute;
     right: 16px;
@@ -155,37 +142,12 @@ strong {
     z-index: 2;
   }
 
-  .card-tile:hover .bulk-quantity-controls,
-  .card-tile:focus-within .bulk-quantity-controls,
-  .bulk-quantity-controls.active {
+  .card-tile:hover .tile-bulk-controls,
+  .card-tile:focus-within .tile-bulk-controls,
+  .tile-bulk-controls.active {
     opacity: 1;
     transform: translateY(0);
     visibility: visible;
-  }
-
-  .bulk-quantity-controls button {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    color: #fbbf24;
-    cursor: pointer;
-    display: flex;
-    font: inherit;
-    height: 30px;
-    justify-content: center;
-    padding: 0;
-    width: 30px;
-  }
-
-  .bulk-quantity-controls button:hover,
-  .bulk-quantity-controls button:focus-visible {
-    background: rgba(14, 165, 233, 0.2);
-    outline: none;
-  }
-
-  .bulk-quantity-controls span {
-    min-width: 22px;
-    text-align: center;
   }
 }
 </style>
