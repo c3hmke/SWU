@@ -26,7 +26,7 @@ defineEmits<{
       <span v-if="priceNzd !== null" class="availability">{{ totalAvailable }} available, from</span>
       <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
     </RouterLink>
-    <div class="bulk-quantity-controls">
+    <div class="bulk-quantity-controls" :class="{ active: bulkQuantity }">
       <template v-if="bulkQuantity">
         <button
           type="button"
@@ -156,7 +156,8 @@ strong {
   }
 
   .card-tile:hover .bulk-quantity-controls,
-  .card-tile:focus-within .bulk-quantity-controls {
+  .card-tile:focus-within .bulk-quantity-controls,
+  .bulk-quantity-controls.active {
     opacity: 1;
     transform: translateY(0);
     visibility: visible;
