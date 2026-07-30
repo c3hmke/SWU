@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import type {
   BulkCardSearchListingDto,
-  BulkCardSearchRequestCardDto,
   BulkCardSearchResponseDto
 } from '../../../shared/contracts/cards';
 import ActionButton from '../../components/ActionButton.vue';
@@ -16,6 +15,11 @@ import ListingRow from '../../components/ListingRow.vue';
 import ListingStats from '../../components/ListingStats.vue';
 import MarketplaceSellerMeta from '../../components/MarketplaceSellerMeta.vue';
 import NameChip from '../../components/NameChip.vue';
+import {
+  parseBulkSearchInput,
+  readBulkSearchInput,
+  writeBulkSearchInput
+} from './bulkSearchInput';
 import { bulkSearchCards } from './useBulkCardSearch';
 
 type SellerGroup = {
@@ -28,7 +32,6 @@ type SellerGroup = {
 };
 
 const maxBulkSearchNames = 150;
-const bulkSearchInputStorageKey = 'bulk-search-input';
 
 const rawCardNames = ref('');
 const isLoading = ref(false);
@@ -37,18 +40,14 @@ const result = ref<BulkCardSearchResponseDto | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 onMounted(() => {
-  rawCardNames.value = sessionStorage.getItem(bulkSearchInputStorageKey) ?? '';
+  rawCardNames.value = readBulkSearchInput();
 });
 
 watch(rawCardNames, value => {
-  if (value) {
-    sessionStorage.setItem(bulkSearchInputStorageKey, value);
-  } else {
-    sessionStorage.removeItem(bulkSearchInputStorageKey);
-  }
+  writeBulkSearchInput(value);
 });
 
-const parsedCards = computed(() => parseCardList(rawCardNames.value));
+const parsedCards = computed(() => parseBulkSearchInput(rawCardNames.value));
 const matchedCardsWithoutListings = computed(() =>
   result.value?.matchedCards.filter(card => card.missingQuantity > 0) ?? []
 );
@@ -74,69 +73,6 @@ const sellerGroups = computed<SellerGroup[]>(() => {
 
   return [...groups.values()].sort((a, b) => a.sellerName.localeCompare(b.sellerName));
 });
-
-function parseCardList(value: string): BulkCardSearchRequestCardDto[] {
-  const cards = new Map<string, BulkCardSearchRequestCardDto>();
-
-  for (const line of value.split(/\r?\n|;/)) {
-    const item = parseCardListLine(line);
-    if (!item) continue;
-
-    const key = item.name.toLowerCase();
-    const existing = cards.get(key);
-
-    if (existing) {
-      existing.quantity += item.quantity;
-    } else {
-      cards.set(key, item);
-    }
-  }
-
-  return [...cards.values()];
-}
-
-function parseCardListLine(line: string): BulkCardSearchRequestCardDto | null {
-  const cleanLine = line
-      .replace(/^\s*(?:[-*]|\d+[.)])\s*/, '')
-      .trim()
-      .replace(/\s+/g, ' ')
-      .replace(/\s*\|\s*/g, ' - ');
-
-  if (!cleanLine) {
-    return null;
-  }
-
-  const trailingQuantityMatch = cleanLine.match(/^(.+\S)\s+x(\d+)$/i);
-  if (trailingQuantityMatch) {
-    const quantity = parseQuantityToken(`x${trailingQuantityMatch[2]}`);
-    if (quantity) {
-      return { name: trailingQuantityMatch[1], quantity };
-    }
-  }
-
-  const firstSpaceIndex = cleanLine.indexOf(' ');
-  if (firstSpaceIndex === -1) {
-    return { name: cleanLine, quantity: 1 };
-  }
-
-  const maybeQuantity = cleanLine.slice(0, firstSpaceIndex);
-  const quantity = parseQuantityToken(maybeQuantity);
-
-  if (!quantity) {
-    return { name: cleanLine, quantity: 1 };
-  }
-
-  const name = cleanLine.slice(firstSpaceIndex + 1).trim();
-  return name ? { name, quantity } : null;
-}
-
-function parseQuantityToken(token: string): number | null {
-  const match = token.match(/^(?:x(\d+)|(\d+)x?)$/i);
-  if (!match) return null;
-
-  const quantity = Number.parseInt(match[1] ?? match[2], 10);
-  return quantity > 0 ? quantity : null;
-}
 
 async function runLookup() {
   if (parsedCards.value.length === 0) {

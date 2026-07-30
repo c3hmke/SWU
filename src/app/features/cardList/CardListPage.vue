@@ -7,6 +7,13 @@ import CardTile from '../../components/CardTile.vue';
 import ConsoleHeader from '../../components/ConsoleHeader.vue';
 import ConsoleLabel from '../../components/ConsoleLabel.vue';
 import ConsolePanel from '../../components/ConsolePanel.vue';
+import {
+  adjustBulkSearchCardQuantity,
+  getBulkSearchQuantities,
+  normalizeCardName,
+  readBulkSearchInput,
+  writeBulkSearchInput
+} from '../bulkSearch/bulkSearchInput';
 import { listCards, listCardSets } from './useCardList';
 
 const route = useRoute();
@@ -22,6 +29,7 @@ const highValuePageCount = 12;
 const highValuePageSize = 12;
 const searchPageSize = 50;
 const highValuePage = ref(Math.max(1, Math.min(highValuePageCount, Number(route.query.page) || 1)));
+const bulkSearchQuantities = ref(new Map<string, number>());
 const hasNameFilter = computed(() => Boolean(nameFilter.value.trim()));
 const hasSetFilter = computed(() => Boolean(selectedSetCode.value));
 const hasResultFilter = computed(() => hasNameFilter.value || hasSetFilter.value);
@@ -103,6 +111,7 @@ async function loadCardSets() {
 }
 
 onMounted(() => {
+  bulkSearchQuantities.value = getBulkSearchQuantities(readBulkSearchInput());
   void loadCardSets();
   void loadCards();
 });
@@ -171,6 +180,16 @@ function adjustHighValuePage(delta: number) {
       page: newPage > 1 ? String(newPage) : undefined
     }
   });
+}
+
+function getBulkQuantity(name: string): number {
+  return bulkSearchQuantities.value.get(normalizeCardName(name)) ?? 0;
+}
+
+function adjustBulkQuantity(name: string, delta: number) {
+  const updatedInput = adjustBulkSearchCardQuantity(readBulkSearchInput(), name, delta);
+  writeBulkSearchInput(updatedInput);
+  bulkSearchQuantities.value = getBulkSearchQuantities(updatedInput);
 }
 </script>
 
@@ -241,6 +260,9 @@ function adjustHighValuePage(delta: number) {
           :thumbnail-image-url="card.thumbnailImageUrl"
           :price-nzd="card.lowestPriceNzd"
           :total-available="card.totalAvailable"
+          :bulk-quantity="getBulkQuantity(card.name)"
+          @increment-bulk-quantity="adjustBulkQuantity(card.name, 1)"
+          @decrement-bulk-quantity="adjustBulkQuantity(card.name, -1)"
         />
       </div>
     </ConsolePanel>

@@ -9,16 +9,39 @@ defineProps<{
   thumbnailImageUrl?: string | null;
   priceNzd: number | null;
   totalAvailable: number;
+  bulkQuantity?: number;
+}>();
+
+defineEmits<{
+  incrementBulkQuantity: [];
+  decrementBulkQuantity: [];
 }>();
 </script>
 
 <template>
-  <RouterLink :to="to" class="card-tile" :class="{ unavailable: priceNzd === null }">
-    <CardImageFrame :image-url="thumbnailImageUrl ?? imageUrl" :alt="name" />
-    <span class="card-name">{{ name }}</span>
-    <span v-if="priceNzd !== null" class="availability">{{ totalAvailable }} available, from</span>
-    <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
-  </RouterLink>
+  <article class="card-tile" :class="{ unavailable: priceNzd === null }">
+    <RouterLink :to="to" class="card-link">
+      <CardImageFrame :image-url="thumbnailImageUrl ?? imageUrl" :alt="name" />
+      <span class="card-name">{{ name }}</span>
+      <span v-if="priceNzd !== null" class="availability">{{ totalAvailable }} available, from</span>
+      <strong>{{ priceNzd === null ? 'no listings found' : formatPrice(priceNzd) }}</strong>
+    </RouterLink>
+    <div class="bulk-quantity-controls">
+      <template v-if="bulkQuantity">
+        <button
+          type="button"
+          :aria-label="`Remove one ${name} from bulk search`"
+          @click="$emit('decrementBulkQuantity')"
+        >−</button>
+        <span :aria-label="`${bulkQuantity} in bulk search`">{{ bulkQuantity }}</span>
+      </template>
+      <button
+        type="button"
+        :aria-label="`Add one ${name} to bulk search`"
+        @click="$emit('incrementBulkQuantity')"
+      >+</button>
+    </div>
+  </article>
 </template>
 
 <style scoped>
@@ -32,14 +55,19 @@ defineProps<{
     0 18px 60px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.03) inset;
   clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
-  display: grid;
-  gap: 10px;
-  padding: 10px;
-  text-decoration: none;
+  position: relative;
   transition:
     border-color 160ms ease,
     transform 160ms ease,
     background 160ms ease;
+}
+
+.card-link {
+  color: inherit;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  text-decoration: none;
 }
 
 .card-tile:hover {
@@ -101,5 +129,62 @@ strong {
   color: #cbd5e1;
   font-size: 0.78rem;
   text-transform: uppercase;
+}
+
+.bulk-quantity-controls {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 801px) {
+  .bulk-quantity-controls {
+    align-items: center;
+    background: rgba(2, 6, 23, 0.92);
+    border: 1px solid rgba(125, 211, 252, 0.48);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.46);
+    color: #f8fafc;
+    display: flex;
+    font-size: 0.82rem;
+    font-weight: 900;
+    opacity: 0;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    transform: translateY(-4px);
+    transition: opacity 140ms ease, transform 140ms ease;
+    visibility: hidden;
+    z-index: 2;
+  }
+
+  .card-tile:hover .bulk-quantity-controls,
+  .card-tile:focus-within .bulk-quantity-controls {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+
+  .bulk-quantity-controls button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #fbbf24;
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    height: 30px;
+    justify-content: center;
+    padding: 0;
+    width: 30px;
+  }
+
+  .bulk-quantity-controls button:hover,
+  .bulk-quantity-controls button:focus-visible {
+    background: rgba(14, 165, 233, 0.2);
+    outline: none;
+  }
+
+  .bulk-quantity-controls span {
+    min-width: 22px;
+    text-align: center;
+  }
 }
 </style>
