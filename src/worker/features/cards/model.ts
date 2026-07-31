@@ -8,6 +8,7 @@ export type Card = {
   imageUrl: string | null;
   variantOf: string | null;
   variantTypeId: string | null;
+  reprintOfId: string | null;
 };
 
 export type CardListItem = {

@@ -9,6 +9,7 @@ export type CardDetailsDto = {
   imageUrl: string | null;
   variantOf: string | null;
   variantTypeId: string | null;
+  reprintOfId: string | null;
   listings: CardListingDto[];
 };
 

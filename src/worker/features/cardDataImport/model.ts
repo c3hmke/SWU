@@ -12,6 +12,7 @@ export type CardImport = {
   imageUrl: string | null;
   variantOf: number | null;
   variantType: CardVariantTypeImport | null;
+  reprintOfId: string | null;
 };
 
 export type CardVariantTypeImport = {
@@ -35,4 +36,5 @@ export type PreparedCardImport = {
   name: string;
   variantOf: string | null;
   variantTypeId: string | null;
+  reprintOfId: string | null;
 };

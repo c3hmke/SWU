@@ -42,7 +42,8 @@ export function validateCardSetImport(value: unknown): CardSetImport {
       name: readRequiredString(cardValue, 'name'),
       imageUrl: readOptionalString(cardValue, 'imageUrl'),
       variantOf: readOptionalInteger(cardValue, 'variantOf'),
-      variantType: readOptionalVariantType(cardValue, index)
+      variantType: readOptionalVariantType(cardValue, index),
+      reprintOfId: readOptionalString(cardValue, 'reprintOfId')
     };
   });
 
@@ -63,7 +64,8 @@ export function prepareCardSetImport(cardSet: CardSetImport): PreparedCardSetImp
         card.variantOf && card.variantOf !== card.collectorNumber
           ? createCardId(cardSet.code, card.variantOf)
           : null,
-      variantTypeId: card.variantType?.id ?? null
+      variantTypeId: card.variantType?.id ?? null,
+      reprintOfId: card.reprintOfId
     }))
   };
 }

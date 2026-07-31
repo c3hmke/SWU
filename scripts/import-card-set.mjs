@@ -51,6 +51,7 @@ async function fetchOfficialCardSet(setIdentifier) {
     url.searchParams.set('pagination[pageSize]', pageSize.toString());
     url.searchParams.set('filters[expansion][id][$eq]', expansion.id.toString());
     url.searchParams.set('populate[variantTypes]', '*');
+    url.searchParams.set('populate[reprintOf][fields][0]', 'cardUid');
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -80,7 +81,8 @@ async function fetchOfficialCardSet(setIdentifier) {
         name: attributes.subtitle ? `${attributes.title} - ${attributes.subtitle}` : attributes.title,
         imageUrl: readOfficialImageUrl(attributes),
         variantOf: readVariantOfCollectorNumber(attributes),
-        variantType: readOfficialVariantType(attributes, expansion.code, attributes.cardNumber)
+        variantType: readOfficialVariantType(attributes, expansion.code, attributes.cardNumber),
+        reprintOfId: readReprintOfId(attributes)
       });
     }
 
@@ -143,6 +145,11 @@ function readVariantOfCollectorNumber(attributes) {
   return Number.isInteger(cardNumber) && cardNumber !== attributes.cardNumber ? cardNumber : null;
 }
 
+function readReprintOfId(attributes) {
+  const cardUid = attributes.reprintOf?.data?.attributes?.cardUid;
+  return typeof cardUid === 'string' && cardUid.trim() ? cardUid.trim() : null;
+}
+
 function readOfficialVariantType(attributes, setCode, collectorNumber) {
   const rows = Array.isArray(attributes.variantTypes?.data)
     ? attributes.variantTypes.data
@@ -203,8 +210,8 @@ function buildImportSql(cardSet) {
       ? createCardId(cardSet.code, card.variantOf)
       : null;
     statements.push(
-      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id)
-       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)})
+      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id, reprint_of_id)
+       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)}, ${sqlNullableString(card.reprintOfId)})
        on conflict(id) do update set
          set_code = excluded.set_code,
          collector_number = excluded.collector_number,
@@ -212,6 +219,7 @@ function buildImportSql(cardSet) {
          image_url = excluded.image_url,
          variant_of = excluded.variant_of,
          variant_type_id = excluded.variant_type_id,
+         reprint_of_id = excluded.reprint_of_id,
          updated_at = CURRENT_TIMESTAMP;`
     );
   }
