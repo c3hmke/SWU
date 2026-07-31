@@ -24,7 +24,7 @@ try {
 
   const result = spawnSync(
     'npx',
-    ['wrangler', 'd1', 'execute', DATABASE_NAME, isRemote ? '--remote' : '--local', '--file', sqlPath],
+    ['wrangler', 'd1', 'execute', DATABASE_NAME, isRemote ? '--remote' : '--local', '--yes', '--file', sqlPath],
     { stdio: 'inherit' }
   );
 
@@ -216,8 +216,8 @@ function buildImportSql(cardSet) {
       ? createCardId(cardSet.code, card.variantOf)
       : null;
     statements.push(
-      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id, reprint_of_id, validation_id, swu_serial)
-       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)}, ${sqlNullableString(card.reprintOfId)}, ${sqlNullableString(card.validationId)}, ${sqlNullableString(card.swuSerial)})
+      `insert into cards (id, slug, set_code, collector_number, name, image_url, variant_of, variant_type_id, reprint_of_id, validation_id, swu_serial)
+       values (${sqlString(id)}, ${sqlString(createCardSlug(id, card.name))}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)}, ${sqlNullableString(card.reprintOfId)}, ${sqlNullableString(card.validationId)}, ${sqlNullableString(card.swuSerial)})
        on conflict(id) do update set
          set_code = excluded.set_code,
          collector_number = excluded.collector_number,
@@ -228,6 +228,7 @@ function buildImportSql(cardSet) {
          reprint_of_id = excluded.reprint_of_id,
          validation_id = excluded.validation_id,
          swu_serial = excluded.swu_serial,
+         slug = coalesce(cards.slug, excluded.slug),
          updated_at = CURRENT_TIMESTAMP;`
     );
   }
@@ -237,6 +238,17 @@ function buildImportSql(cardSet) {
 
 function createCardId(setCode, collectorNumber) {
   return `${setCode}${collectorNumber.toString().padStart(3, '0')}`;
+}
+
+function createCardSlug(id, name) {
+  const nameSlug = name
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const cardId = id.toLowerCase();
+  return nameSlug ? `${nameSlug}-${cardId}` : cardId;
 }
 
 function sqlString(value) {
