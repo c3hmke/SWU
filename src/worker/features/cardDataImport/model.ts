@@ -13,6 +13,8 @@ export type CardImport = {
   variantOf: number | null;
   variantType: CardVariantTypeImport | null;
   reprintOfId: string | null;
+  validationId: string | null;
+  swuSerial: string | null;
 };
 
 export type CardVariantTypeImport = {
@@ -37,4 +39,6 @@ export type PreparedCardImport = {
   variantOf: string | null;
   variantTypeId: string | null;
   reprintOfId: string | null;
+  validationId: string | null;
+  swuSerial: string | null;
 };

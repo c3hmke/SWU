@@ -82,7 +82,9 @@ async function fetchOfficialCardSet(setIdentifier) {
         imageUrl: readOfficialImageUrl(attributes),
         variantOf: readVariantOfCollectorNumber(attributes),
         variantType: readOfficialVariantType(attributes, expansion.code, attributes.cardNumber),
-        reprintOfId: readReprintOfId(attributes)
+        reprintOfId: readReprintOfId(attributes),
+        validationId: readOptionalOfficialString(attributes.validationId),
+        swuSerial: readOptionalOfficialString(attributes.serialCode)
       });
     }
 
@@ -147,7 +149,11 @@ function readVariantOfCollectorNumber(attributes) {
 
 function readReprintOfId(attributes) {
   const cardUid = attributes.reprintOf?.data?.attributes?.cardUid;
-  return typeof cardUid === 'string' && cardUid.trim() ? cardUid.trim() : null;
+  return readOptionalOfficialString(cardUid);
+}
+
+function readOptionalOfficialString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 function readOfficialVariantType(attributes, setCode, collectorNumber) {
@@ -210,8 +216,8 @@ function buildImportSql(cardSet) {
       ? createCardId(cardSet.code, card.variantOf)
       : null;
     statements.push(
-      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id, reprint_of_id)
-       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)}, ${sqlNullableString(card.reprintOfId)})
+      `insert into cards (id, set_code, collector_number, name, image_url, variant_of, variant_type_id, reprint_of_id, validation_id, swu_serial)
+       values (${sqlString(id)}, ${sqlString(cardSet.code)}, ${card.collectorNumber}, ${sqlString(card.name)}, ${sqlNullableString(card.imageUrl)}, ${sqlNullableString(variantOf)}, ${sqlNullableString(card.variantType?.id ?? null)}, ${sqlNullableString(card.reprintOfId)}, ${sqlNullableString(card.validationId)}, ${sqlNullableString(card.swuSerial)})
        on conflict(id) do update set
          set_code = excluded.set_code,
          collector_number = excluded.collector_number,
@@ -220,6 +226,8 @@ function buildImportSql(cardSet) {
          variant_of = excluded.variant_of,
          variant_type_id = excluded.variant_type_id,
          reprint_of_id = excluded.reprint_of_id,
+         validation_id = excluded.validation_id,
+         swu_serial = excluded.swu_serial,
          updated_at = CURRENT_TIMESTAMP;`
     );
   }

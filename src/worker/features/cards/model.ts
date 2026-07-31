@@ -9,6 +9,8 @@ export type Card = {
   variantOf: string | null;
   variantTypeId: string | null;
   reprintOfId: string | null;
+  validationId: string | null;
+  swuSerial: string | null;
 };
 
 export type CardListItem = {

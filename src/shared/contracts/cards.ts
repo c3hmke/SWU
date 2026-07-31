@@ -10,6 +10,8 @@ export type CardDetailsDto = {
   variantOf: string | null;
   variantTypeId: string | null;
   reprintOfId: string | null;
+  validationId: string | null;
+  swuSerial: string | null;
   listings: CardListingDto[];
 };
 
