@@ -20,16 +20,15 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
     return createJsonResponse({ error: 'Invalid image URL' }, 400, request);
 
   const variant = parseImageVariant(url.searchParams.get('variant'));
-  const width = parseThumbnailWidth(url.searchParams.get('width'));
-  const cacheKey = createCacheKey(imageUrl, variant, width);
+  const cacheKey = createCacheKey(imageUrl, variant);
 
   const cachedResponse = await caches.default.match(cacheKey);
   if (cachedResponse) {
     return cachedResponse;
   }
 
-  const response = await fetchImageResponse(imageUrl, variant, width)
-      ?? (variant === 'thumbnail' ? await fetchImageResponse(imageUrl, 'original', width) : null);
+  const response = await fetchImageResponse(imageUrl, variant)
+      ?? (variant === 'thumbnail' ? await fetchImageResponse(imageUrl, 'original') : null);
 
   if (!response)
     return createJsonResponse({ error: 'Image unavailable' }, 502, request);
@@ -39,24 +38,24 @@ export async function cardImageRoutes(request: Request, ctx: ExecutionContext): 
   return response;
 }
 
-export async function prewarmCardImage(imageUrlValue: string): Promise<'cached' | 'warmed' | 'skipped' | 'failed'> {
+export async function prewarmCardImage(imageUrlValue: string, variant: ImageVariant = 'thumbnail'): Promise<'cached' | 'warmed' | 'skipped' | 'failed'> {
   const imageUrl = parseAllowedImageUrl(imageUrlValue);
 
   if (!imageUrl) return 'skipped';
 
-  const cacheKey = createCacheKey(imageUrl, 'original', thumbnailWidth);
+  const cacheKey = createCacheKey(imageUrl, variant);
   const cachedResponse = await caches.default.match(cacheKey);
 
   if (cachedResponse) return 'cached';
 
-  const response = await fetchImageResponse(imageUrl, 'original', thumbnailWidth);
+  const response = await fetchImageResponse(imageUrl, variant);
   if (!response) return 'failed';
 
   await caches.default.put(cacheKey, response);
   return 'warmed';
 }
 
-async function fetchImageResponse(imageUrl: URL, variant: ImageVariant, width: number): Promise<Response | null> {
+async function fetchImageResponse(imageUrl: URL, variant: ImageVariant): Promise<Response | null> {
   const upstreamResponse = await fetch(imageUrl.toString(), {
     headers: {
       accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
@@ -70,7 +69,7 @@ async function fetchImageResponse(imageUrl: URL, variant: ImageVariant, width: n
               fit: 'scale-down',
               format: 'webp',
               metadata: 'none',
-              width
+              width: thumbnailWidth
             }
           }
         : {})
@@ -95,15 +94,6 @@ function parseImageVariant(value: string | null): ImageVariant {
   return value === 'thumbnail' ? 'thumbnail' : 'original';
 }
 
-function parseThumbnailWidth(value: string | null): number {
-  const parsed = value === null ? Number.NaN : Number.parseInt(value, 10);
-
-  if (!Number.isFinite(parsed))
-    return thumbnailWidth;
-
-  return Math.min(320, Math.max(120, parsed));
-}
-
 function parseAllowedImageUrl(value: string | null): URL | null {
   if (!value) return null;
 
@@ -121,12 +111,11 @@ function parseAllowedImageUrl(value: string | null): URL | null {
   return url;
 }
 
-function createCacheKey(imageUrl: URL, variant: ImageVariant, width: number): Request {
+function createCacheKey(imageUrl: URL, variant: ImageVariant): Request {
   const cacheUrl = new URL('/api/card-images', imageCacheOrigin);
 
   cacheUrl.searchParams.set('url', imageUrl.toString());
   cacheUrl.searchParams.set('variant', variant);
-  cacheUrl.searchParams.set('width', width.toString());
 
   return new Request(cacheUrl.toString(), { method: 'GET' });
 }

@@ -128,7 +128,6 @@ function createProxiedImageUrl(request: Request, imageUrl: string, variant?: 'th
 
   if (variant) {
     url.searchParams.set('variant', variant);
-    url.searchParams.set('width', '240');
   }
 
   return url.toString();
