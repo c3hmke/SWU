@@ -45,7 +45,7 @@ export default {
       if (!rateLimit.success)
         return createJsonResponse({ error: 'Too many requests' }, 429, request);
 
-      return cardRoutes(request, env);
+      return cardRoutes(request, env, ctx);
     }
 
     if (url.pathname.startsWith('/api/sync/')) {

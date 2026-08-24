@@ -10,6 +10,7 @@ import type {
 import { createCardSlug, resolveCardIdFromSlug } from '../../../shared/cardSlugs';
 import type { WorkerEnv } from '../../env';
 import { NotFoundError } from '../../shared/errors/NotFoundError';
+import { readThroughCache } from '../../shared/http/apiCache';
 import { createJsonResponse } from '../../shared/http/createJsonResponse';
 import { createAdapterRegistry } from '../sellerSync/adapters';
 import type { Seller, SellerAdapter } from '../sellerSync/model';
@@ -37,7 +38,7 @@ type RequestedCard = {
   quantity: number;
 };
 
-export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Response> {
+export async function cardRoutes(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
 
   if (url.pathname === '/api/cards' && request.method === 'GET') {
@@ -50,15 +51,17 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
         name ? parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit) : setCode
         ? null : parseBoundedInteger(url.searchParams.get('pageSize'), defaultCardListLimit, 1, maxCardListLimit);
 
-    const cards = await listCardsByChasePrice(env.DB, {
-      name, setCode, limit: pageSize, offset: pageSize === null ? 0 : (page - 1) * pageSize
-    });
+    const cards = await readThroughCache(request, ctx, () =>
+      listCardsByChasePrice(env.DB, {
+        name, setCode, limit: pageSize, offset: pageSize === null ? 0 : (page - 1) * pageSize
+      })
+    );
 
     return createJsonResponse(cards.map(card => mapCardListItemDto(request, card)), 200, request);
   }
 
   if (url.pathname === '/api/card-sets' && request.method === 'GET') {
-    const sets = await listCardSets(env.DB);
+    const sets = await readThroughCache(request, ctx, () => listCardSets(env.DB));
     return createJsonResponse(sets.map(mapCardSetDto), 200, request);
   }
 
@@ -87,9 +90,11 @@ export async function cardRoutes(request: Request, env: WorkerEnv): Promise<Resp
     return createJsonResponse({ error: 'Not found' }, 404, request);
 
   try {
-    return createJsonResponse(
-        await getCardDetails(env.DB, decodeURIComponent(match[1])), 200, request
+    const cardDetails = await readThroughCache(request, ctx, () =>
+      getCardDetails(env.DB, decodeURIComponent(match[1]))
     );
+
+    return createJsonResponse(cardDetails, 200, request);
   } catch (error) {
     if (error instanceof NotFoundError) {
       return createJsonResponse({error: error.message}, 404, request);
